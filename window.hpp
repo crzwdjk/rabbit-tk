@@ -8,6 +8,7 @@
 typedef void (*winredraw_t)(xcb_window_t, xcb_gcontext_t, cairo_t *);
 
 class Window {
+protected:
   xcb_connection_t * conn;
   xcb_screen_t * screen;
   xcb_window_t win_id;
@@ -27,6 +28,9 @@ public:
  }
 };
 
-
+class ToplevelWindow : public Window {
+public:
+  ToplevelWindow(xcb_connection_t *, xcb_screen_t *, int, int, char*);
+};
 
 #endif

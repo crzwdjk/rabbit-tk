@@ -1,4 +1,10 @@
+#include <map>
+#include <xcb/xcb.h>
+#include <xcb/xcb_atom.h>
 #include "window.hpp"
+#include "atomcache.hpp"
+
+extern std::map<xcb_window_t, Window *> windows;
 
 /* class Window - basic window class, representation of X window.
    its key aspects are things like size, position, etc,
@@ -53,6 +59,8 @@ Window::Window(xcb_connection_t * c, xcb_screen_t * s, int w, int h) : conn(c), 
 			  0, 0, w, h, 0, XCB_WINDOW_CLASS_INPUT_OUTPUT,
 			  screen->root_visual, mask, values);
 	
+	windows[win_id] = this;
+	fprintf(stderr, "creating window %d\n", win_id);
 
 	surface = cairo_xcb_surface_create(c, win_id, 
 					   find_visual_for_id(s),
@@ -63,3 +71,27 @@ Window::Window(xcb_connection_t * c, xcb_screen_t * s, int w, int h) : conn(c), 
 	xcb_flush(c);
 }
 
+ToplevelWindow::ToplevelWindow(xcb_connection_t * c, xcb_screen_t * s, int w, int h, char* name)
+	: Window(c, s, w, h)
+{
+	
+	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
+			     WM_NAME, STRING, 8,
+			     strlen (name), name);
+	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
+			     WM_ICON_NAME, STRING, 8,
+			     strlen (name), name);
+	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
+			     atoms["_NET_WM_NAME"], STRING, 8,
+			     strlen (name), name);
+	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
+			     atoms["_NET_WM_ICON_NAME"], STRING, 8,
+			     strlen (name), name);
+	xcb_atom_t t = atoms["_NET_WM_WINDOW"];
+	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
+			     atoms["_NET_WM_WINDOW_TYPE"], ATOM, 32,
+			     1, &t);
+
+
+
+}
