@@ -5,7 +5,7 @@
 #include <cairo/cairo.h>
 #include <cairo/cairo-xcb.h>
 
-typedef void (*winredraw_t)(xcb_window_t, xcb_gcontext_t, cairo_t *);
+typedef void (*winredraw_t)(cairo_t *, void *);
 
 class Window {
 protected:
@@ -14,15 +14,18 @@ protected:
   xcb_window_t win_id;
   xcb_gcontext_t fg_gc;
   winredraw_t redraw_cb;
+  void * redraw_data;
   unsigned int width, height;
   cairo_surface_t *surface;
-  cairo_t *cr;
+  Window * parent;
 public:
-  Window(xcb_connection_t *, xcb_screen_t *, int, int);
-  void set_redraw(winredraw_t f){ redraw_cb = f; }
+  cairo_t *cr;
+  Window(xcb_connection_t *, xcb_screen_t *, int, int, int = 0, int = 0, Window * = NULL);
+  void set_redraw(winredraw_t f, void * user_data)
+  { redraw_cb = f; redraw_data = user_data; redraw(0, 0, width, height);}
   void redraw(int, int, int, int){
     cairo_surface_mark_dirty(surface);
-    redraw_cb(win_id, fg_gc, cr);
+    redraw_cb(cr, redraw_data);
     cairo_surface_flush(surface);
     xcb_flush (conn);
  }

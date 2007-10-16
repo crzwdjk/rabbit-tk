@@ -35,32 +35,31 @@ static xcb_visualtype_t * find_visual_for_id(xcb_screen_t * s)
 	return NULL;
 }
 
-Window::Window(xcb_connection_t * c, xcb_screen_t * s, int w, int h) : conn(c), screen(s),
-								       width(w), height(h)
+Window::Window(xcb_connection_t * c, xcb_screen_t * s, int w, int h, int x, int y, Window * p)
+	: conn(c), screen(s), width(w), height(h), parent(p)
 {
 	win_id = xcb_generate_id(c);
 	uint32_t mask = 0;
 	uint32_t values[2];
 	
-
-
 	fg_gc = xcb_generate_id(c);
 	mask = XCB_GC_FOREGROUND | XCB_GC_GRAPHICS_EXPOSURES;
 	values[0] = screen->black_pixel;
 	values[1] = 1;
 	xcb_create_gc(c, fg_gc, screen->root, mask, values);
 	
-
 	mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
-	values[0] = 0xffcccccc;//screen->white_pixel;
+	values[0] = p ? 0xffccffcc : 0xffcccccc; // XXX: change to conf setting
 	values[1] = XCB_EVENT_MASK_EXPOSURE;
 
-	xcb_create_window(c, XCB_COPY_FROM_PARENT, win_id, screen->root,
-			  0, 0, w, h, 0, XCB_WINDOW_CLASS_INPUT_OUTPUT,
+	// if width or height are 0, they're specified as being stretchy, i.e. to width of parent
+	// we ought to also resize subwindows along with parent
+	if(w == 0 && parent) w = parent->width;
+	xcb_create_window(c, XCB_COPY_FROM_PARENT, win_id, p ? p->win_id : screen->root,
+			  x, y, w, h, 0, XCB_WINDOW_CLASS_INPUT_OUTPUT,
 			  screen->root_visual, mask, values);
 	
 	windows[win_id] = this;
-	fprintf(stderr, "creating window %d\n", win_id);
 
 	surface = cairo_xcb_surface_create(c, win_id, 
 					   find_visual_for_id(s),
@@ -91,7 +90,6 @@ ToplevelWindow::ToplevelWindow(xcb_connection_t * c, xcb_screen_t * s, int w, in
 	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
 			     atoms["_NET_WM_WINDOW_TYPE"], ATOM, 32,
 			     1, &t);
-
-
-
+	// TODO: set WM_NORMAL_HINTS, WM_HINTS
 }
+

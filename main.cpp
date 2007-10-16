@@ -7,11 +7,12 @@
 #include "window.hpp"
 #include "eventloop.hpp"
 #include "atomcache.hpp"
+#include "menu.hpp"
 
 xcb_connection_t *c;
 xcb_screen_t * screen;
 
-void win_redraw(xcb_window_t win, xcb_gcontext_t foreground, cairo_t * cr)
+void win_redraw(cairo_t * cr, void * data)
 {
 	//	cairo_set_source_rgb(cr, 0.6, 0.6, 0.6);
 	//cairo_paint(cr);
@@ -44,6 +45,15 @@ void win_redraw(xcb_window_t win, xcb_gcontext_t foreground, cairo_t * cr)
 	cairo_fill (cr);
 }
 
+MenuData * make_menu()
+{
+	vector<MenuEntry> * menu = new vector<MenuEntry>;
+	MenuEntry file = {"File", NULL };
+	MenuEntry help = {"Help", NULL };
+	menu->push_back(file);
+	menu->push_back(help);
+	return menu;
+}
 
 int main (int argc, char ** argv)
 {
@@ -54,7 +64,8 @@ int main (int argc, char ** argv)
   screen = xcb_setup_roots_iterator(xcb_get_setup(c)).data;
   atoms.bind(c);
   ToplevelWindow w(c, screen, 400, 400, "fish fish fish");
-  w.set_redraw(&win_redraw);
+  MenuBar m(c, screen, &w, make_menu());
+  w.set_redraw(&win_redraw, NULL);
   
   rtk_main_event_loop(c);
 
