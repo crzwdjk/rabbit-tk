@@ -29,6 +29,7 @@ class MenuBar : public Menu {
   Window * win;
   MenuData * data;
   map<int, MenuEntry> menumap;
+  int baseline, height;
   xcb_connection_t * conn;
 public:
   MenuBar(xcb_connection_t *, xcb_screen_t *, Window * parent, MenuData *);
@@ -43,6 +44,7 @@ class PopupMenu : Menu {
   map<int, MenuEntry> menumap;
   Menu & parentmenu;
   bool unclicked;
+  int itemheight, baseline;
 public:
   PopupMenu(xcb_connection_t *, Window * parent, MenuData *, Menu &, int, int);
   virtual ~PopupMenu() { parentmenu.completion_cb(); delete win; }

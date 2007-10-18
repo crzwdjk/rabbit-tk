@@ -1,9 +1,10 @@
 #include "menu.hpp"
+#include "global.hpp"
 #include <stdio.h>
 #include <assert.h>
 
 const int MENU_PRE_SPACE = 5, MENU_POST_SPACE = 5;
-
+const int MENU_BOTTOM_SPACE = 1, MENU_TOP_SPACE = 2;
 
 static void menubar_redraw_helper(cairo_t * cr, void * user_data)
 {
@@ -30,16 +31,15 @@ static void popupmenu_redraw_helper(cairo_t * cr, void * user_data)
 }
 
 
-// TODO: get rid of trailing spacer perhaps?
 MenuBar::MenuBar(xcb_connection_t * c, xcb_screen_t * s, Window * parent, MenuData * d) 
 	: data(d), conn(c)
 {
+	height = int(menu_font_extents.height) + MENU_BOTTOM_SPACE + MENU_TOP_SPACE;
+	baseline = height - int(menu_font_extents.descent) - MENU_BOTTOM_SPACE;
+
 	// create the menubar subwindow
-	// TODO: determine height from cairo_font_extents
-	win = new Window(c, s, 0, 18, 0, 0, parent);
-	// TODO: set cairo font from prefs
-	cairo_select_font_face(win->cr, "sans", CAIRO_FONT_SLANT_NORMAL,
-				CAIRO_FONT_WEIGHT_NORMAL);
+	win = new Window(c, s, 0, height, 0, 0, parent);
+	cairo_set_scaled_font(win->cr, menu_font);
 
 	win->set_click(menubar_click_helper, this);
 
@@ -65,7 +65,7 @@ void MenuBar::redraw()
 	cairo_paint(cr);
 	cairo_set_source_rgb(cr, 0, 0, 0);
 	map<int, MenuEntry>::iterator iter;
-	int y = 14, x;
+	int y = baseline, x;
 	for(iter = menumap.begin(); iter != menumap.end(); iter++) {
 		if((*iter).second == MENU_SPACER) break;
 		int cur_x = (*iter).first + MENU_PRE_SPACE;
@@ -100,10 +100,10 @@ void MenuBar::click(int butt, int mod, int x, int y)
 	fprintf(stderr, "%s\n", item.label);
 	cairo_set_source_rgb(cr, 0.3, 0.3, 0.6); // TODO: color from config
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-	cairo_rectangle(cr, hl_start, 0, hl_end - hl_start, 18); // TODO menu height from metrics
+	cairo_rectangle(cr, hl_start, 0, hl_end - hl_start, height);
 	cairo_fill(cr);
 	cairo_set_source_rgb(cr, 1.0, 1.0, 1.0); // TODO: color from config
-	cairo_move_to(cr, hl_start + MENU_PRE_SPACE, 14);
+	cairo_move_to(cr, hl_start + MENU_PRE_SPACE, baseline);
 	cairo_show_text(cr, item.label);
 	cairo_surface_flush(cairo_get_target(cr));
 	xcb_flush(conn);
@@ -115,9 +115,10 @@ void MenuBar::click(int butt, int mod, int x, int y)
 	int abs_x, abs_y;
 	win->get_abs_coords(x, y, abs_x, abs_y);
 	int pu_x = (abs_x - x) + hl_start;
-	int pu_y = (abs_y - y) + 18;
+	int pu_y = (abs_y - y) + height;
 
 	PopupMenu * p = new PopupMenu(conn, win, item.submenu, *this, pu_x, pu_y);
+	(void)p; // the PopupMenu will eventually delete itself
 }
 
 void MenuBar::completion_cb()
@@ -127,30 +128,26 @@ void MenuBar::completion_cb()
 
 // popupmenu uses a menuwindow, which is an ovr-red window that grabs the keyboard and mouse
 // also a release handler for the left mouse button which triggers that menu.
+// TODO: get rid of trailing spacer.
 PopupMenu::PopupMenu(xcb_connection_t * c, Window * parent, 
 		     MenuData * d, Menu & pm, int x, int y)
 	: data(d), parentmenu(pm), unclicked(false)
 {
-	// TODO: determine height from cairo_font_extents
-	// TODO: set cairo font from prefs
-	// TODO: calculate size without a window
-	//cairo_select_font_face(win->cr, "sans", CAIRO_FONT_SLANT_NORMAL,
-	//			CAIRO_FONT_WEIGHT_NORMAL);
-
+	itemheight = int(menu_font_extents.height) + MENU_BOTTOM_SPACE + MENU_TOP_SPACE;
+	baseline = itemheight - int(menu_font_extents.descent) - MENU_BOTTOM_SPACE;
 	// make menu map (but vertical)
 	MenuData::iterator iter;
 	int max_x = 0, cur_y = 0;
 	for(iter = d->begin(); iter != d->end(); iter++) {
+		// TODO: spacers
 		cairo_text_extents_t extents;
-		//cairo_text_extents(win->cr, (*iter).label, &extents);
-		extents.x_advance = 100;
+		cairo_scaled_font_text_extents(menu_font, (*iter).label, &extents);
 		menumap[cur_y] = *iter;
-		cur_y += 18;
+		cur_y += itemheight;
 		if(extents.x_advance > max_x) max_x = extents.x_advance;
 	}
 	// add dummy menu entry at end of map.
 	menumap[cur_y] = MENU_SPACER;
-	// TODO: spacers
 
 	// figure out position and size
 	int width = max_x + MENU_PRE_SPACE + MENU_POST_SPACE;
@@ -161,6 +158,7 @@ PopupMenu::PopupMenu(xcb_connection_t * c, Window * parent,
 	win->set_redraw(popupmenu_redraw_helper, this);
 	win->set_unclick(popupmenu_unclick_helper, this);
 	// TODO: register motion handler
+	cairo_set_scaled_font(win->cr, menu_font);
 }
 
 void PopupMenu::redraw()
@@ -168,14 +166,14 @@ void PopupMenu::redraw()
 	cairo_t * cr = win->cr;
 	cairo_set_source_rgb(cr, 0, 0, 0);
 	map<int, MenuEntry>::iterator iter;
-	int dy = 18, cur_x = MENU_PRE_SPACE;
-	int y = dy;
+	int cur_x = MENU_PRE_SPACE;
+	int y = 0;
 	for(iter = menumap.begin(); iter != menumap.end(); iter++) {
 		if((*iter).second == MENU_SPACER) break;
 		MenuEntry entry = (*iter).second;
-		cairo_move_to(cr, cur_x, y - 3);
+		cairo_move_to(cr, cur_x, y + baseline);
 		cairo_show_text(cr, entry.label);
-		y += dy;
+		y += itemheight;
 	}
 }
 

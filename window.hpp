@@ -4,6 +4,8 @@
 #include <xcb/xcb.h>
 #include <cairo/cairo.h>
 #include <cairo/cairo-xcb.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 static void add_event_to_mask(xcb_connection_t * c, xcb_window_t win, uint32_t event)
 {

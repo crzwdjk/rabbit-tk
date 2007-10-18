@@ -8,6 +8,7 @@
 #include "eventloop.hpp"
 #include "atomcache.hpp"
 #include "menu.hpp"
+#include "global.hpp"
 
 xcb_connection_t *c;
 xcb_screen_t * screen;
@@ -80,6 +81,8 @@ int main (int argc, char ** argv)
   variable as the default display name */
   c = xcb_connect (NULL, NULL);
   screen = xcb_setup_roots_iterator(xcb_get_setup(c)).data;
+  rtk_global_init(c, screen);
+
   atoms.bind(c);
   ToplevelWindow w(c, screen, 400, 400, "fish fish fish");
   MenuBar m(c, screen, &w, make_menu());
