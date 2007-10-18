@@ -45,7 +45,7 @@ class PopupMenu : Menu {
   bool unclicked;
 public:
   PopupMenu(xcb_connection_t *, Window * parent, MenuData *, Menu &, int, int);
-  virtual ~PopupMenu() { delete win; }
+  virtual ~PopupMenu() { parentmenu.completion_cb(); delete win; }
   void redraw();
   void unclick(int, int, int, int);
   void motion(int, int, int, int);

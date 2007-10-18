@@ -122,10 +122,7 @@ void MenuBar::click(int butt, int mod, int x, int y)
 
 void MenuBar::completion_cb()
 {
-	cairo_surface_mark_dirty(cairo_get_target(win->cr));
 	redraw();
-	//cairo_surface_flush();
-	//	xcb_flush(conn);
 }
 
 // popupmenu uses a menuwindow, which is an ovr-red window that grabs the keyboard and mouse
@@ -205,7 +202,6 @@ void PopupMenu::unclick(int butt, int mod, int x, int y)
 	}
 	// TODO: submenus. and submenus with actions, adium-style.
 	if(item.action) item.action();
-	parentmenu.completion_cb();
 	delete this;
 }
 
