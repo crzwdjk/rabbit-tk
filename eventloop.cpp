@@ -29,24 +29,7 @@ void rtk_main_event_loop(xcb_connection_t * c)
 		screen = xcb_setup_roots_iterator(xcb_get_setup(c)).data;
 	}
 
-	int fd = xcb_get_file_descriptor(c);
-	int max_fd = fd + 1;
-	fd_set rfds; FD_ZERO(&rfds);
-	fd_set wfds; FD_ZERO(&wfds);
-	fd_set efds; FD_ZERO(&efds);
-	FD_SET(fd, &rfds);
-	FD_SET(fd, &efds);
-
 	while(1) {
-		fd_set new_rfds = rfds;
-		fd_set new_wfds = wfds;
-		fd_set new_efds = efds;
-		struct timeval select_timeout = { 0, 1000 };
-		select(max_fd, &new_rfds, &new_wfds, &new_efds, &select_timeout);
-
-		if(FD_ISSET(fd, &new_efds)) break;
-		if(!FD_ISSET(fd, &new_rfds)) continue;
-
 		xcb_generic_event_t * e = xcb_poll_for_event(c);
 		if(!e) continue;
 
@@ -74,7 +57,26 @@ void rtk_process_one_event(xcb_generic_event_t * e)
 						expose->width, expose->height);
 		break;
 	}
+	case XCB_BUTTON_PRESS:
+	{
+		xcb_button_press_event_t * butt = (xcb_button_press_event_t*)e;
+		if(windows.find(butt->event) == windows.end()) return;
+		// TODO: deal with modifiers
+		windows[butt->event]->click(butt->detail, 0, 
+					    butt->event_x, butt->event_y);
+		break;
+	}
+	case XCB_BUTTON_RELEASE:
+	{
+		xcb_button_press_event_t * butt = (xcb_button_press_event_t*)e;
+		if(windows.find(butt->event) == windows.end()) return;
+		// TODO: deal with modifiers
+		windows[butt->event]->unclick(butt->detail, 0, 
+					      butt->event_x, butt->event_y);
+		break;
+	}
 	default:
+		fprintf(stderr, "unknown event %d\n", e->response_type & ~0x80);
 		break;
 	}
 	free(e);

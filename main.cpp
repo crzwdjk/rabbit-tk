@@ -45,11 +45,29 @@ void win_redraw(cairo_t * cr, void * data)
 	cairo_fill (cr);
 }
 
+void about()
+{
+	fprintf(stderr, "About\n");
+}
+
+void exit_program()
+{
+	exit(0);
+}
 MenuData * make_menu()
 {
 	vector<MenuEntry> * menu = new vector<MenuEntry>;
-	MenuEntry file = {"File", NULL };
-	MenuEntry help = {"Help", NULL };
+	vector<MenuEntry> * helpMenu = new vector<MenuEntry>;
+	MenuEntry ab = {"About", NULL, &about};
+	helpMenu->push_back(ab);
+	MenuData * fileMenu = new MenuData;
+	MenuEntry ratherlong = {"Something rather long to test spacing", NULL, NULL};
+	MenuEntry ex = {"Exit", NULL, &exit_program};
+	fileMenu->push_back(ratherlong);
+	fileMenu->push_back(ex);
+
+	MenuEntry file = {"File", fileMenu, NULL };
+	MenuEntry help = {"Help", helpMenu, NULL};
 	menu->push_back(file);
 	menu->push_back(help);
 	return menu;
