@@ -10,7 +10,7 @@ class Pixmap {
   xcb_pixmap_t pix_id;
 public:
   cairo_t * cr;
-  Pixmap(xcb_connection_t *, xcb_screen_t *, int width, int height, int depth);
+  Pixmap(int width, int height, int depth);
 };
 
 #endif
