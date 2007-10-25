@@ -1,5 +1,17 @@
 #include "global.hpp"
 #include "window.hpp"
+#include "atomcache.hpp"
+
+
+xcb_connection_t * rtk_xcb_connection;
+xcb_screen_t * rtk_xcb_screen;
+
+static void xcb_connection_init()
+{
+	rtk_xcb_connection = xcb_connect (NULL, NULL);
+	rtk_xcb_screen = xcb_setup_roots_iterator(xcb_get_setup(rtk_xcb_connection)).data;
+	atoms.bind(rtk_xcb_connection);
+}
 
 cairo_scaled_font_t * menu_font;
 cairo_font_extents_t menu_font_extents;
@@ -16,8 +28,10 @@ static void menu_font_init(cairo_t * cr)
 	cairo_scaled_font_extents(menu_font, &menu_font_extents);
 }
 
-void rtk_global_init(xcb_connection_t * c, xcb_screen_t * s)
+
+void rtk_global_init(int argc, char ** argv)
 {
-	Window tmp(c, s, 0, 0);
+	xcb_connection_init();
+	Window tmp(0, 0);
 	menu_font_init(tmp.cr);
 }

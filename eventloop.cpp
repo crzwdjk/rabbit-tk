@@ -20,17 +20,10 @@ void rtk_process_one_event(xcb_generic_event_t * e);
 
 map<xcb_window_t, Window *> windows;
 
-void rtk_main_event_loop(xcb_connection_t * c)
+void rtk_main_event_loop()
 {
-	xcb_screen_t * screen;
-
-	if(c == NULL) {
-		c = xcb_connect (NULL, NULL);
-		screen = xcb_setup_roots_iterator(xcb_get_setup(c)).data;
-	}
-
 	while(1) {
-		xcb_generic_event_t * e = xcb_poll_for_event(c);
+		xcb_generic_event_t * e = xcb_poll_for_event(rtk_xcb_connection);
 		if(!e) continue;
 
 		// XXX: dispatch to other thread if needed

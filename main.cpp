@@ -10,9 +10,6 @@
 #include "menu.hpp"
 #include "global.hpp"
 
-xcb_connection_t *c;
-xcb_screen_t * screen;
-
 void win_redraw(cairo_t * cr, void * data)
 {
 	//	cairo_set_source_rgb(cr, 0.6, 0.6, 0.6);
@@ -79,17 +76,14 @@ int main (int argc, char ** argv)
 
   /* Open the connection to the X server. Use the DISPLAY environment
   variable as the default display name */
-  c = xcb_connect (NULL, NULL);
-  screen = xcb_setup_roots_iterator(xcb_get_setup(c)).data;
-  rtk_global_init(c, screen);
+  rtk_global_init(argc, argv);
 
-  atoms.bind(c);
-  ToplevelWindow w(c, screen, 400, 400, "fish fish fish");
-  MenuBar m(c, screen, &w, make_menu());
+  ToplevelWindow w(400, 400, "fish fish fish");
+  MenuBar m(&w, make_menu());
   w.set_redraw(&win_redraw, NULL);
   
-  rtk_main_event_loop(c);
+  rtk_main_event_loop();
 
-  xcb_disconnect(c);
+  xcb_disconnect(rtk_xcb_connection);
   return 0;
 }

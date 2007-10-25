@@ -30,9 +30,8 @@ class MenuBar : public Menu {
   MenuData * data;
   map<int, MenuEntry> menumap;
   int baseline, height;
-  xcb_connection_t * conn;
 public:
-  MenuBar(xcb_connection_t *, xcb_screen_t *, Window * parent, MenuData *);
+  MenuBar(Window * parent, MenuData *);
   void redraw();
   void click(int butt, int mod, int x, int y);
   virtual void completion_cb();
@@ -46,7 +45,7 @@ class PopupMenu : Menu {
   bool unclicked;
   int itemheight, baseline;
 public:
-  PopupMenu(xcb_connection_t *, Window * parent, MenuData *, Menu &, int, int);
+  PopupMenu(Window * parent, MenuData *, Menu &, int, int);
   virtual ~PopupMenu() { parentmenu.completion_cb(); delete win; }
   void redraw();
   void unclick(int, int, int, int);

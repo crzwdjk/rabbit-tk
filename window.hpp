@@ -6,9 +6,11 @@
 #include <cairo/cairo-xcb.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "global.hpp"
 
-static void add_event_to_mask(xcb_connection_t * c, xcb_window_t win, uint32_t event)
+static void add_event_to_mask(xcb_window_t win, uint32_t event)
 {
+  xcb_connection_t * c = rtk_xcb_connection;
   xcb_get_window_attributes_cookie_t cookie = xcb_get_window_attributes(c, win);
   xcb_generic_error_t * er = NULL;
   xcb_get_window_attributes_reply_t * attrs = xcb_get_window_attributes_reply(c, cookie, &er);
@@ -27,8 +29,6 @@ typedef void (*winclick_t)(void *, int, int, int, int);
 
 class Window {
 protected:
-  xcb_connection_t * conn;
-  xcb_screen_t * screen;
   xcb_window_t win_id;
   xcb_gcontext_t fg_gc;
 
@@ -45,7 +45,7 @@ protected:
 public:
   cairo_t *cr;
   Window() {}
-  Window(xcb_connection_t *, xcb_screen_t *, int, int, int = 0, int = 0, Window * = NULL);
+  Window(int, int, int = 0, int = 0, Window * = NULL);
   void set_redraw(winredraw_t f, void * user_data)
   { redraw_cb = f; redraw_data = user_data; redraw(0, 0, width, height);}
   void redraw(int, int, int, int){
@@ -53,19 +53,19 @@ public:
     cairo_surface_mark_dirty(surface);
     redraw_cb(cr, redraw_data);
     cairo_surface_flush(surface);
-    xcb_flush (conn);
+    xcb_flush (rtk_xcb_connection);
   }
   void set_click(winclick_t f, void * user_data) {
     click_cb = f;
     click_data = user_data;
-    add_event_to_mask(conn, win_id, XCB_EVENT_MASK_BUTTON_PRESS);
+    add_event_to_mask(win_id, XCB_EVENT_MASK_BUTTON_PRESS);
   }
   void click(int b, int m, int x, int y)
   { click_cb(click_data, b, m, x, y); }
   void set_unclick(winclick_t f, void * user_data) {
     unclick_cb = f;
     unclick_data = user_data;
-    add_event_to_mask(conn, win_id, XCB_EVENT_MASK_BUTTON_RELEASE);
+    add_event_to_mask(win_id, XCB_EVENT_MASK_BUTTON_RELEASE);
   }
 
   void get_abs_coords(int, int, int&, int&);
@@ -77,14 +77,14 @@ public:
 
 class ToplevelWindow : public Window {
 public:
-  ToplevelWindow(xcb_connection_t *, xcb_screen_t *, int, int, char*);
+  ToplevelWindow(int, int, char*);
 };
 
 class MenuWindow :public Window {
   unsigned int width, height;
 public:
-  MenuWindow(xcb_connection_t *, int, int, int, int, Window *);
-  virtual ~MenuWindow() { xcb_ungrab_pointer(conn, XCB_CURRENT_TIME); }
+  MenuWindow(int, int, int, int, Window *);
+  virtual ~MenuWindow() { xcb_ungrab_pointer(rtk_xcb_connection, XCB_CURRENT_TIME); }
 };
 
 #endif

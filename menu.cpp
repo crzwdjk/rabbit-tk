@@ -31,14 +31,14 @@ static void popupmenu_redraw_helper(cairo_t * cr, void * user_data)
 }
 
 
-MenuBar::MenuBar(xcb_connection_t * c, xcb_screen_t * s, Window * parent, MenuData * d) 
-	: data(d), conn(c)
+MenuBar::MenuBar(Window * parent, MenuData * d)
+	: data(d)
 {
 	height = int(menu_font_extents.height) + MENU_BOTTOM_SPACE + MENU_TOP_SPACE;
 	baseline = height - int(menu_font_extents.descent) - MENU_BOTTOM_SPACE;
 
 	// create the menubar subwindow
-	win = new Window(c, s, 0, height, 0, 0, parent);
+	win = new Window(0, height, 0, 0, parent);
 	cairo_set_scaled_font(win->cr, menu_font);
 
 	win->set_click(menubar_click_helper, this);
@@ -106,7 +106,7 @@ void MenuBar::click(int butt, int mod, int x, int y)
 	cairo_move_to(cr, hl_start + MENU_PRE_SPACE, baseline);
 	cairo_show_text(cr, item.label);
 	cairo_surface_flush(cairo_get_target(cr));
-	xcb_flush(conn);
+	xcb_flush(rtk_xcb_connection);
 
 	// TODO: items with an action rather than a submenu
 	assert(item.submenu);
@@ -117,7 +117,7 @@ void MenuBar::click(int butt, int mod, int x, int y)
 	int pu_x = (abs_x - x) + hl_start;
 	int pu_y = (abs_y - y) + height;
 
-	PopupMenu * p = new PopupMenu(conn, win, item.submenu, *this, pu_x, pu_y);
+	PopupMenu * p = new PopupMenu(win, item.submenu, *this, pu_x, pu_y);
 	(void)p; // the PopupMenu will eventually delete itself
 }
 
@@ -129,8 +129,7 @@ void MenuBar::completion_cb()
 // popupmenu uses a menuwindow, which is an ovr-red window that grabs the keyboard and mouse
 // also a release handler for the left mouse button which triggers that menu.
 // TODO: get rid of trailing spacer.
-PopupMenu::PopupMenu(xcb_connection_t * c, Window * parent, 
-		     MenuData * d, Menu & pm, int x, int y)
+PopupMenu::PopupMenu(Window * parent, MenuData * d, Menu & pm, int x, int y)
 	: data(d), parentmenu(pm), unclicked(false)
 {
 	itemheight = int(menu_font_extents.height) + MENU_BOTTOM_SPACE + MENU_TOP_SPACE;
@@ -154,7 +153,7 @@ PopupMenu::PopupMenu(xcb_connection_t * c, Window * parent,
 	int height = cur_y;
 
 	// create the menubar subwindow
-	win = new MenuWindow(c, width, height, x, y, parent);
+	win = new MenuWindow(width, height, x, y, parent);
 	win->set_redraw(popupmenu_redraw_helper, this);
 	win->set_unclick(popupmenu_unclick_helper, this);
 	// TODO: register motion handler

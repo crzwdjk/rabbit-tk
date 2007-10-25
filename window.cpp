@@ -35,9 +35,12 @@ static xcb_visualtype_t * find_visual_for_id(xcb_screen_t * s)
 	return NULL;
 }
 
-Window::Window(xcb_connection_t * c, xcb_screen_t * s, int w, int h, int x, int y, Window * p)
-	: conn(c), screen(s), width(w), height(h), parent(p)
+Window::Window(int w, int h, int x, int y, Window * p)
+	: width(w), height(h), parent(p)
 {
+	xcb_connection_t * c = rtk_xcb_connection;
+	xcb_screen_t * screen = rtk_xcb_screen;
+
 	win_id = xcb_generate_id(c);
 	uint32_t mask = 0;
 	uint32_t values[2];
@@ -61,8 +64,7 @@ Window::Window(xcb_connection_t * c, xcb_screen_t * s, int w, int h, int x, int 
 	
 	windows[win_id] = this;
 
-	surface = cairo_xcb_surface_create(c, win_id, 
-					   find_visual_for_id(s),
+	surface = cairo_xcb_surface_create(c, win_id, find_visual_for_id(screen),
 					   w, h);
 	cr = cairo_create (surface);
 
@@ -73,10 +75,10 @@ Window::Window(xcb_connection_t * c, xcb_screen_t * s, int w, int h, int x, int 
 
 void Window::get_abs_coords(int x, int y, int & ax, int & ay)
 {
-	xcb_translate_coordinates_cookie_t cookie = xcb_translate_coordinates(conn, win_id,
-									      screen->root,
-									      x, y);
-	xcb_translate_coordinates_reply_t * r = xcb_translate_coordinates_reply(conn, cookie, NULL);
+	xcb_translate_coordinates_cookie_t cookie =
+		xcb_translate_coordinates(rtk_xcb_connection, win_id, rtk_xcb_screen->root, x, y);
+	xcb_translate_coordinates_reply_t * r =
+		xcb_translate_coordinates_reply(rtk_xcb_connection, cookie, NULL);
 	ax = r->dst_x;
 	ay = r->dst_y;
 	free(r);
@@ -84,15 +86,16 @@ void Window::get_abs_coords(int x, int y, int & ax, int & ay)
 
 Window::~Window()
 {
-	xcb_destroy_window(conn, win_id);
+	xcb_destroy_window(rtk_xcb_connection, win_id);
 	windows.erase(win_id);
-	xcb_flush(conn);
+	xcb_flush(rtk_xcb_connection);
 }
 
 
-ToplevelWindow::ToplevelWindow(xcb_connection_t * c, xcb_screen_t * s, int w, int h, char* name)
-	: Window(c, s, w, h)
+ToplevelWindow::ToplevelWindow(int w, int h, char* name)
+	: Window(w, h)
 {
+	xcb_connection_t * c = rtk_xcb_connection;
 	
 	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
 			     WM_NAME, STRING, 8,
@@ -114,11 +117,12 @@ ToplevelWindow::ToplevelWindow(xcb_connection_t * c, xcb_screen_t * s, int w, in
 }
 
 
-MenuWindow::MenuWindow(xcb_connection_t * c, int w, int h, int x, int y, Window * p)
+MenuWindow::MenuWindow(int w, int h, int x, int y, Window * p)
 	: width(w), height(h)
 {
-	conn = c;
-	screen = p->screen;
+	xcb_connection_t * c = rtk_xcb_connection;
+	xcb_screen_t * screen = rtk_xcb_screen;
+
 	win_id = xcb_generate_id(c);
 	uint32_t mask = 0;
 	uint32_t values[2];
