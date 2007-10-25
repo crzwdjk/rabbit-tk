@@ -40,6 +40,14 @@ void rtk_process_one_event(xcb_generic_event_t * e)
 	// we don't do much processing beyond casting the event to the right type and
 	// calling the right window's callback
 	switch(e->response_type & ~0x80) {
+	case 0:
+	{
+#if 0
+		xcb_generic_error_t * er = (xcb_generic_error_t *)er;
+		fprintf(stderr, "RTK: X error %d\n", er->error_code);
+#endif
+		break;
+	}
 	case XCB_EXPOSE:
 	{
 		xcb_expose_event_t * expose = (xcb_expose_event_t*)e;
@@ -66,6 +74,15 @@ void rtk_process_one_event(xcb_generic_event_t * e)
 		// TODO: deal with modifiers
 		windows[butt->event]->unclick(butt->detail, 0, 
 					      butt->event_x, butt->event_y);
+		break;
+	}
+	case XCB_MOTION_NOTIFY:
+	{
+		xcb_motion_notify_event_t * butt = (xcb_motion_notify_event_t*)e;
+		if(windows.find(butt->event) == windows.end()) return;
+		// TODO: deal with modifiers	
+		windows[butt->event]->motion(butt->detail, 0, 
+					     butt->event_x, butt->event_y);
 		break;
 	}
 	default:
