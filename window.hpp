@@ -38,6 +38,8 @@ protected:
   void * click_data;
   winclick_t unclick_cb;
   void * unclick_data;
+  winclick_t motion_cb;
+  void * motion_data;
 
   unsigned int width, height;
   cairo_surface_t *surface;
@@ -66,6 +68,13 @@ public:
     unclick_cb = f;
     unclick_data = user_data;
     add_event_to_mask(win_id, XCB_EVENT_MASK_BUTTON_RELEASE);
+  }
+  void motion(int b, int m, int x, int y)
+  { motion_cb(motion_data, b, m, x, y); }
+  void set_motion(winclick_t f, void * user_data) {
+    motion_cb = f;
+    motion_data = user_data;
+    add_event_to_mask(win_id, XCB_EVENT_MASK_POINTER_MOTION);
   }
 
   void get_abs_coords(int, int, int&, int&);

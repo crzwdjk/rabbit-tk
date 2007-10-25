@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include "window.hpp"
+#include "pixmap.hpp"
 
 using namespace std;
 
@@ -17,10 +18,13 @@ struct MenuEntry {
   // TODO: pixmap
   // TODO: keycombo
   void (*action)();
-  bool operator==(MenuEntry o) {return label == o.label && submenu == o.submenu; }
+  bool operator==(MenuEntry o) {return label == o.label && submenu == o.submenu &&action == o.action; }
 };
 
 class Menu {
+protected:
+  xcb_connection_t * conn;
+  map<int, MenuEntry*> menumap;
 public:
   virtual void completion_cb() = 0;
 };
@@ -28,7 +32,6 @@ public:
 class MenuBar : public Menu {
   Window * win;
   MenuData * data;
-  map<int, MenuEntry> menumap;
   int baseline, height;
 public:
   MenuBar(Window * parent, MenuData *);
@@ -37,13 +40,15 @@ public:
   virtual void completion_cb();
 };
 
-class PopupMenu : Menu {
+class PopupMenu : public Menu {
   MenuWindow * win;
   MenuData * data;
-  map<int, MenuEntry> menumap;
   Menu & parentmenu;
   bool unclicked;
-  int itemheight, baseline;
+  int itemheight, baseline, width, height;
+  MenuEntry * highlighted;
+  void renderbackpix();
+  Pixmap * back_pix;
 public:
   PopupMenu(Window * parent, MenuData *, Menu &, int, int);
   virtual ~PopupMenu() { parentmenu.completion_cb(); delete win; }

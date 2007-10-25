@@ -128,7 +128,7 @@ MenuWindow::MenuWindow(int w, int h, int x, int y, Window * p)
 	uint32_t values[2];
 
 	mask = XCB_CW_BACK_PIXEL | XCB_CW_OVERRIDE_REDIRECT;
-	values[0] = p ? 0xffccffcc : 0xffcccccc; // XXX: change to conf setting
+	values[0] = p ? 0xff00cccc : 0xffcccccc; // XXX: change to conf setting
 	values[1] = 1;
 
 	xcb_create_window(c, XCB_COPY_FROM_PARENT, win_id, screen->root,
@@ -153,7 +153,7 @@ MenuWindow::MenuWindow(int w, int h, int x, int y, Window * p)
 			    WM_TRANSIENT_FOR, WINDOW, 32, 1, &(p->win_id));
 
 	xcb_map_window(c, win_id);
-	xcb_grab_pointer(c, 0, win_id, XCB_EVENT_MASK_BUTTON_RELEASE,
+	xcb_grab_pointer(c, 0, win_id, XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION,
 			 XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC,
 			 XCB_NONE, XCB_NONE, XCB_CURRENT_TIME);
 	xcb_flush(c);

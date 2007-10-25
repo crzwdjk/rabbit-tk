@@ -24,6 +24,12 @@ static void popupmenu_unclick_helper(void * user_data, int b, int m, int x, int 
 	t->unclick(b, m, x, y);
 }
 
+static void popupmenu_motion_helper(void * user_data, int b, int m, int x, int y)
+{
+	PopupMenu * t = (PopupMenu*)user_data;
+	t->motion(b, m, x, y);
+}
+
 static void popupmenu_redraw_helper(cairo_t * cr, void * user_data)
 {
 	PopupMenu * t = (PopupMenu*)user_data;
@@ -48,12 +54,12 @@ MenuBar::MenuBar(Window * parent, MenuData * d)
 	for(iter = d->begin(); iter != d->end(); iter++) {
 		cairo_text_extents_t extents;
 		cairo_text_extents(win->cr, (*iter).label, &extents);
-		menumap[cur_x] = *iter;
+		menumap[cur_x] = &(*iter);
 		fprintf(stderr, "%d %s ", cur_x, (*iter).label);
 		cur_x += extents.x_advance + MENU_PRE_SPACE + MENU_POST_SPACE;
 	}
 	// add dummy menu entry at end of map.
-	menumap[cur_x] = MENU_SPACER;
+	menumap[cur_x] = NULL;
 	fprintf(stderr, "%d\n", cur_x);
 	win->set_redraw(menubar_redraw_helper, this);
 }
@@ -64,14 +70,14 @@ void MenuBar::redraw()
 	cairo_set_source_rgb(cr, 0.75, 1.0, 0.75);
 	cairo_paint(cr);
 	cairo_set_source_rgb(cr, 0, 0, 0);
-	map<int, MenuEntry>::iterator iter;
+	map<int, MenuEntry*>::iterator iter;
 	int y = baseline, x;
 	for(iter = menumap.begin(); iter != menumap.end(); iter++) {
-		if((*iter).second == MENU_SPACER) break;
+		if((*iter).second == NULL) break;
 		int cur_x = (*iter).first + MENU_PRE_SPACE;
-		MenuEntry entry = (*iter).second;
+		MenuEntry * entry = (*iter).second;
 		cairo_move_to(cr, cur_x, y);
-		cairo_show_text(cr, entry.label);
+		cairo_show_text(cr, entry->label);
 		x = cur_x;
 	}
 }
@@ -84,32 +90,29 @@ void MenuBar::redraw()
 void MenuBar::click(int butt, int mod, int x, int y)
 {
 	// figure out what was clicked:
-	map<int, MenuEntry>::iterator i = menumap.upper_bound(x);
+	map<int, MenuEntry*>::iterator i = menumap.upper_bound(x);
 	int hl_end = (*i).first;
 	i--;
-	MenuEntry item = (*i).second;
+	MenuEntry * item = (*i).second;
 	int hl_start = (*i).first;
-	fprintf(stderr, "clicked (%d, %d): ", x, y);
-	if(item == MENU_SPACER) {
-		fprintf(stderr, "spacer\n");
+	if(item == NULL)
 		return;
-	}
 
 	// highlight clicked entry
 	cairo_t * cr = win->cr;
-	fprintf(stderr, "%s\n", item.label);
+	fprintf(stderr, "%s\n", item->label);
 	cairo_set_source_rgb(cr, 0.3, 0.3, 0.6); // TODO: color from config
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 	cairo_rectangle(cr, hl_start, 0, hl_end - hl_start, height);
 	cairo_fill(cr);
 	cairo_set_source_rgb(cr, 1.0, 1.0, 1.0); // TODO: color from config
 	cairo_move_to(cr, hl_start + MENU_PRE_SPACE, baseline);
-	cairo_show_text(cr, item.label);
+	cairo_show_text(cr, item->label);
 	cairo_surface_flush(cairo_get_target(cr));
 	xcb_flush(rtk_xcb_connection);
 
 	// TODO: items with an action rather than a submenu
-	assert(item.submenu);
+	assert(item->submenu);
 
 	// TODO: account for edge of screen. Xinerama? Twinview?
 	int abs_x, abs_y;
@@ -117,7 +120,7 @@ void MenuBar::click(int butt, int mod, int x, int y)
 	int pu_x = (abs_x - x) + hl_start;
 	int pu_y = (abs_y - y) + height;
 
-	PopupMenu * p = new PopupMenu(win, item.submenu, *this, pu_x, pu_y);
+	PopupMenu * p = new PopupMenu(win, item->submenu, *this, pu_x, pu_y);
 	(void)p; // the PopupMenu will eventually delete itself
 }
 
@@ -130,7 +133,7 @@ void MenuBar::completion_cb()
 // also a release handler for the left mouse button which triggers that menu.
 // TODO: get rid of trailing spacer.
 PopupMenu::PopupMenu(Window * parent, MenuData * d, Menu & pm, int x, int y)
-	: data(d), parentmenu(pm), unclicked(false)
+	: data(d), parentmenu(pm), unclicked(false), highlighted(NULL)
 {
 	itemheight = int(menu_font_extents.height) + MENU_BOTTOM_SPACE + MENU_TOP_SPACE;
 	baseline = itemheight - int(menu_font_extents.descent) - MENU_BOTTOM_SPACE;
@@ -141,39 +144,85 @@ PopupMenu::PopupMenu(Window * parent, MenuData * d, Menu & pm, int x, int y)
 		// TODO: spacers
 		cairo_text_extents_t extents;
 		cairo_scaled_font_text_extents(menu_font, (*iter).label, &extents);
-		menumap[cur_y] = *iter;
+		menumap[cur_y] = &(*iter);
 		cur_y += itemheight;
 		if(extents.x_advance > max_x) max_x = extents.x_advance;
 	}
 	// add dummy menu entry at end of map.
-	menumap[cur_y] = MENU_SPACER;
+	menumap[cur_y] = NULL;
 
 	// figure out position and size
-	int width = max_x + MENU_PRE_SPACE + MENU_POST_SPACE;
-	int height = cur_y;
-
+	width = max_x + MENU_PRE_SPACE + MENU_POST_SPACE;
+	height = cur_y;
+	renderbackpix();
 	// create the menubar subwindow
 	win = new MenuWindow(width, height, x, y, parent);
 	win->set_redraw(popupmenu_redraw_helper, this);
 	win->set_unclick(popupmenu_unclick_helper, this);
-	// TODO: register motion handler
+	win->set_motion(popupmenu_motion_helper, this);
 	cairo_set_scaled_font(win->cr, menu_font);
+}
+
+void PopupMenu::renderbackpix()
+{
+	back_pix = new Pixmap(width, height, rtk_xcb_screen->root_depth);
+	cairo_t * cr = back_pix->cr;
+	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+	cairo_surface_mark_dirty(cairo_get_target(cr));
+	cairo_reset_clip(cr);
+	cairo_set_source_rgb(cr, 0.75, 1.0, 0.75);
+	cairo_paint(cr);
+	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+	cairo_set_source_rgb(cr, 0, 0, 0);
+	map<int, MenuEntry*>::iterator iter;
+	int cur_x = MENU_PRE_SPACE;
+	int y = 0;
+	for(iter = menumap.begin(); iter != menumap.end(); iter++) {
+		cairo_set_source_rgb(cr, 0,0,0);
+		if((*iter).second == NULL) break;
+		MenuEntry * entry = (*iter).second;
+		cairo_set_source_rgba(cr, 0, 0, 0, 1);
+		cairo_move_to(cr, cur_x, y + baseline);
+		cairo_show_text(cr, entry->label);
+		y += itemheight;
+	}
+	cairo_surface_flush(cairo_get_target(cr));
+	xcb_flush(conn);
 }
 
 void PopupMenu::redraw()
 {
 	cairo_t * cr = win->cr;
-	cairo_set_source_rgb(cr, 0, 0, 0);
-	map<int, MenuEntry>::iterator iter;
-	int cur_x = MENU_PRE_SPACE;
-	int y = 0;
-	for(iter = menumap.begin(); iter != menumap.end(); iter++) {
-		if((*iter).second == MENU_SPACER) break;
-		MenuEntry entry = (*iter).second;
-		cairo_move_to(cr, cur_x, y + baseline);
-		cairo_show_text(cr, entry.label);
-		y += itemheight;
+
+	// blit from backing pixmap
+	cairo_set_source_surface(cr, cairo_get_target(back_pix->cr), 0, 0);
+	cairo_paint(cr);
+
+	// put in highlight if necessary
+	if(highlighted) {
+		fprintf(stderr, "highlighting %s\n", highlighted->label);
+		int hl_start;
+		map<int, MenuEntry *>::iterator i;
+		MenuEntry * e;
+		for(i = menumap.begin(); i != menumap.end(); i++) {
+			int x = (*i).first;
+			e = (*i).second;
+			if(e == highlighted) {
+				hl_start = x;
+				break;
+			}
+		}
+		cairo_set_source_rgb(cr, 0.3, 0.3, 0.6); // TODO: color from config
+		cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+		cairo_rectangle(cr, 0, hl_start, width, itemheight);
+		cairo_fill(cr);
+		cairo_set_source_rgb(cr, 1, 1, 1);
+		cairo_move_to(cr, MENU_PRE_SPACE, hl_start + baseline);
+		cairo_show_text(cr, e->label);
 	}
+
+	cairo_surface_flush(cairo_get_target(cr));
+	xcb_flush (rtk_xcb_connection);
 }
 
 // activates the menu item
@@ -189,23 +238,37 @@ void PopupMenu::unclick(int butt, int mod, int x, int y)
 			unclicked = true;
 		return;
 	}
-	map<int, MenuEntry>::iterator i = menumap.upper_bound(y);
+	map<int, MenuEntry *>::iterator i = menumap.upper_bound(y);
 	i--;
-	MenuEntry item = (*i).second;
-	if(item == MENU_SPACER) {
-		fprintf(stderr, "spacer\n");
+	MenuEntry * item = (*i).second;
+	if(item == NULL) {
 		delete this;
 		return;
 	}
 	// TODO: submenus. and submenus with actions, adium-style.
-	if(item.action) item.action();
+	if(item->action) item->action();
 	delete this;
 }
 
-// TODO: highlights that which is under the cursor
+// TODO: moving around the parent menu
 void PopupMenu::motion(int butt, int mod, int x, int y)
 {
-
+	// figure out where the cursor is in our own menu
+	// has to be in 
+	MenuEntry * prev_highlighted = highlighted;
+	if(x < 0 || x > width || y < 0 || y > height) {
+		highlighted = NULL;
+	} else {
+		map<int, MenuEntry *>::iterator i = menumap.upper_bound(y);
+		i--;
+		highlighted = (*i).second;
+	}
+	if(highlighted != prev_highlighted) {
+		const char * oldl = prev_highlighted ? prev_highlighted->label : "nothing";
+		const char * newl = highlighted ? highlighted->label : "nothing";
+		fprintf(stderr, "changed from %s to %s", oldl, newl);
+		redraw();
+	}
 }
 
 // TODO: menudata_from_yaml
