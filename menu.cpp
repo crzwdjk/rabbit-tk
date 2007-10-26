@@ -38,7 +38,7 @@ static void popupmenu_redraw_helper(cairo_t * cr, void * user_data)
 
 
 MenuBar::MenuBar(Window * parent, MenuData * d)
-	: data(d)
+	: Menu(d)
 {
 	height = int(menu_font_extents.height) + MENU_BOTTOM_SPACE + MENU_TOP_SPACE;
 	baseline = height - int(menu_font_extents.descent) - MENU_BOTTOM_SPACE;
@@ -108,8 +108,7 @@ void MenuBar::click(int butt, int mod, int x, int y)
 	cairo_set_source_rgb(cr, 1.0, 1.0, 1.0); // TODO: color from config
 	cairo_move_to(cr, hl_start + MENU_PRE_SPACE, baseline);
 	cairo_show_text(cr, item->label);
-	cairo_surface_flush(cairo_get_target(cr));
-	xcb_flush(rtk_xcb_connection);
+	rtk_flush_surface(cr);
 
 	// TODO: items with an action rather than a submenu
 	assert(item->submenu);
@@ -133,7 +132,7 @@ void MenuBar::completion_cb()
 // also a release handler for the left mouse button which triggers that menu.
 // TODO: get rid of trailing spacer.
 PopupMenu::PopupMenu(Window * parent, MenuData * d, Menu & pm, int x, int y)
-	: data(d), parentmenu(pm), unclicked(false), highlighted(NULL)
+	: Menu(d), parentmenu(pm), unclicked(false), highlighted(NULL)
 {
 	itemheight = int(menu_font_extents.height) + MENU_BOTTOM_SPACE + MENU_TOP_SPACE;
 	baseline = itemheight - int(menu_font_extents.descent) - MENU_BOTTOM_SPACE;
@@ -186,8 +185,7 @@ void PopupMenu::renderbackpix()
 		cairo_show_text(cr, entry->label);
 		y += itemheight;
 	}
-	cairo_surface_flush(cairo_get_target(cr));
-	xcb_flush(conn);
+	rtk_flush_surface(cr);
 }
 
 void PopupMenu::redraw()
@@ -220,9 +218,7 @@ void PopupMenu::redraw()
 		cairo_move_to(cr, MENU_PRE_SPACE, hl_start + baseline);
 		cairo_show_text(cr, e->label);
 	}
-
-	cairo_surface_flush(cairo_get_target(cr));
-	xcb_flush (rtk_xcb_connection);
+	rtk_flush_surface(cr);
 }
 
 // activates the menu item

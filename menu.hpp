@@ -24,13 +24,14 @@ struct MenuEntry {
 class Menu {
 protected:
   map<int, MenuEntry*> menumap;
+  MenuData * data;
 public:
+  Menu(MenuData * d) : data(d) {}
   virtual void completion_cb() = 0;
 };
 
 class MenuBar : public Menu {
   Window * win;
-  MenuData * data;
   int baseline, height;
 public:
   MenuBar(Window * parent, MenuData *);
@@ -41,7 +42,6 @@ public:
 
 class PopupMenu : public Menu {
   MenuWindow * win;
-  MenuData * data;
   Menu & parentmenu;
   bool unclicked;
   int itemheight, baseline, width, height;

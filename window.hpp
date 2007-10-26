@@ -54,8 +54,7 @@ public:
     if(!redraw_cb) return;
     cairo_surface_mark_dirty(surface);
     redraw_cb(cr, redraw_data);
-    cairo_surface_flush(surface);
-    xcb_flush (rtk_xcb_connection);
+    rtk_flush_surface(cr);
   }
   void set_click(winclick_t f, void * user_data) {
     click_cb = f;

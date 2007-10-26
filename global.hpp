@@ -13,4 +13,10 @@ extern xcb_screen_t * rtk_xcb_screen;
 
 extern void rtk_global_init(int argc, char ** argv);
 
+static inline void rtk_flush_surface(cairo_t * cr)
+{
+	cairo_surface_flush(cairo_get_target(cr));
+	xcb_flush(rtk_xcb_connection);
+}
+
 #endif
