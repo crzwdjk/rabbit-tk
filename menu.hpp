@@ -23,7 +23,6 @@ struct MenuEntry {
 
 class Menu {
 protected:
-  xcb_connection_t * conn;
   map<int, MenuEntry*> menumap;
 public:
   virtual void completion_cb() = 0;
