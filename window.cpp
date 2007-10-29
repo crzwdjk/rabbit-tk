@@ -42,16 +42,8 @@ Window::Window(int w, int h, int x, int y, Window * p)
 	xcb_screen_t * screen = rtk_xcb_screen;
 
 	win_id = xcb_generate_id(c);
-	uint32_t mask = 0;
 	uint32_t values[2];
-	
-	fg_gc = xcb_generate_id(c);
-	mask = XCB_GC_FOREGROUND | XCB_GC_GRAPHICS_EXPOSURES;
-	values[0] = screen->black_pixel;
-	values[1] = 1;
-	xcb_create_gc(c, fg_gc, screen->root, mask, values);
-	
-	mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
+	uint32_t mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
 	values[0] = p ? 0xffccffcc : 0xffcccccc; // XXX: change to conf setting
 	values[1] = XCB_EVENT_MASK_EXPOSURE;
 

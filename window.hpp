@@ -30,7 +30,6 @@ typedef void (*winclick_t)(void *, int, int, int, int);
 class Window {
 protected:
   xcb_window_t win_id;
-  xcb_gcontext_t fg_gc;
 
   winredraw_t redraw_cb;
   void * redraw_data;
