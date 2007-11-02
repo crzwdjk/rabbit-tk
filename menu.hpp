@@ -28,6 +28,7 @@ protected:
 public:
   Menu(MenuData * d) : data(d) {}
   virtual void completion_cb() = 0;
+  virtual ~Menu() {}
 };
 
 class MenuBar : public Menu {
@@ -38,6 +39,7 @@ public:
   void redraw();
   void click(int butt, int mod, int x, int y);
   virtual void completion_cb();
+  virtual ~MenuBar() { delete win; }
 };
 
 class PopupMenu : public Menu {

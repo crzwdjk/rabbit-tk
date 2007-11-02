@@ -86,6 +86,14 @@ void rtk_process_one_event(xcb_generic_event_t * e)
 					     butt->event_x, butt->event_y);
 		break;
 	}
+	case XCB_KEY_PRESS:
+	{
+
+	}
+	case XCB_MAPPING_NOTIFY:
+		xcb_refresh_keyboard_mapping(rtk_keytable,
+					     (xcb_mapping_notify_event_t*)e);
+		break;
 	default:
 		fprintf(stderr, "unknown event %d\n", e->response_type & ~0x80);
 		break;

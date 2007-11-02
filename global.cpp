@@ -28,10 +28,12 @@ static void menu_font_init(cairo_t * cr)
 	cairo_scaled_font_extents(menu_font, &menu_font_extents);
 }
 
+xcb_key_symbols_t * rtk_keytable;
 
 void rtk_global_init(int argc, char ** argv)
 {
 	xcb_connection_init();
+	rtk_keytable = xcb_key_symbols_alloc(rtk_xcb_connection);
 	Window tmp(0, 0);
 	menu_font_init(tmp.cr);
 }
