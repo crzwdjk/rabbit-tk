@@ -25,8 +25,10 @@ void rtk_main_event_loop()
 	while(1) {
 		xcb_generic_event_t * e = xcb_poll_for_event(rtk_xcb_connection);
 		// TODO: select() as well.
-		if(!e) continue;
-
+		if(!e) {
+			usleep(100);
+			continue;
+		}
 		// TODO: dispatch to other thread if needed
 		rtk_process_one_event(e);
 	}
