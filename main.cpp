@@ -10,7 +10,7 @@
 #include "menu.hpp"
 #include "global.hpp"
 
-void win_redraw(cairo_t * cr, void * data)
+void win_redraw(cairo_t * cr)
 {
 	//	cairo_set_source_rgb(cr, 0.6, 0.6, 0.6);
 	//cairo_paint(cr);
@@ -80,7 +80,7 @@ int main (int argc, char ** argv)
 
   ToplevelWindow w(400, 400, "fish fish fish");
   MenuBar m(&w, make_menu());
-  w.set_redraw(&win_redraw, NULL);
+  w.set_redraw(&win_redraw);
   
   rtk_main_event_loop();
 

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include "global.hpp"
 #include "keymap.hpp"
+#include <tr1/functional>
 
 static void add_event_to_mask(xcb_window_t win, uint32_t event)
 {
@@ -25,8 +26,8 @@ static void add_event_to_mask(xcb_window_t win, uint32_t event)
   xcb_flush(c);
 }
 
-typedef void (*winredraw_t)(cairo_t *, void *);
-typedef void (*winclick_t)(void *, int, int, int, int);
+typedef std::tr1::function<void (cairo_t *)> winredraw_t;
+typedef std::tr1::function<void (int b, int m, int x, int y)> winclick_t;
 
 class Window {
 protected:
@@ -35,11 +36,8 @@ protected:
   winredraw_t redraw_cb;
   void * redraw_data;
   winclick_t click_cb;
-  void * click_data;
   winclick_t unclick_cb;
-  void * unclick_data;
   winclick_t motion_cb;
-  void * motion_data;
 
   Keymap * keymap;
   unsigned int width, height;
@@ -49,31 +47,26 @@ public:
   cairo_t *cr;
   Window() {}
   Window(int, int, int = 0, int = 0, Window * = NULL);
-  void set_redraw(winredraw_t f, void * user_data)
-  { redraw_cb = f; redraw_data = user_data; redraw(0, 0, width, height);}
-  void redraw(int, int, int, int){
+  void set_redraw(winredraw_t f) { redraw_cb = f; redraw(0, 0, width, height); }
+  void redraw(int, int, int, int) {
     if(!redraw_cb) return;
     cairo_surface_mark_dirty(surface);
-    redraw_cb(cr, redraw_data);
+    redraw_cb(cr);
     rtk_flush_surface(cr);
   }
-  void set_click(winclick_t f, void * user_data) {
+  void set_click(winclick_t f) {
     click_cb = f;
-    click_data = user_data;
     add_event_to_mask(win_id, XCB_EVENT_MASK_BUTTON_PRESS);
   }
-  void click(int b, int m, int x, int y)
-  { click_cb(click_data, b, m, x, y); }
-  void set_unclick(winclick_t f, void * user_data) {
+  void click(int b, int m, int x, int y) { click_cb(b, m, x, y); }
+  void set_unclick(winclick_t f) {
     unclick_cb = f;
-    unclick_data = user_data;
     add_event_to_mask(win_id, XCB_EVENT_MASK_BUTTON_RELEASE);
   }
-  void motion(int b, int m, int x, int y)
-  { motion_cb(motion_data, b, m, x, y); }
-  void set_motion(winclick_t f, void * user_data) {
+  void unclick(int b, int m, int x, int y) { unclick_cb(b, m, x, y); }
+  void motion(int b, int m, int x, int y) { motion_cb(b, m, x, y); }
+  void set_motion(winclick_t f) {
     motion_cb = f;
-    motion_data = user_data;
     add_event_to_mask(win_id, XCB_EVENT_MASK_POINTER_MOTION);
   }
   void set_keymap(Keymap * map) {
@@ -82,8 +75,6 @@ public:
   }
 
   void get_abs_coords(int, int, int&, int&);
-  void unclick(int b, int m, int x, int y)
-  { unclick_cb(unclick_data, b, m, x, y); }
   virtual ~Window();
   friend class MenuWindow;
 };

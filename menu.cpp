@@ -2,40 +2,14 @@
 #include "global.hpp"
 #include <stdio.h>
 #include <assert.h>
+#include <tr1/functional>
+#include <functional>
+
+using namespace tr1;
+using namespace tr1::placeholders;
 
 const int MENU_PRE_SPACE = 5, MENU_POST_SPACE = 5;
 const int MENU_BOTTOM_SPACE = 1, MENU_TOP_SPACE = 2;
-
-static void menubar_redraw_helper(cairo_t * cr, void * user_data)
-{
-	MenuBar * t = (MenuBar*)user_data;
-	t->redraw();
-}
-
-static void menubar_click_helper(void * user_data, int b, int m, int x, int y)
-{
-	MenuBar * t = (MenuBar*)user_data;
-	t->click(b, m, x, y);
-}
-
-static void popupmenu_unclick_helper(void * user_data, int b, int m, int x, int y)
-{
-	PopupMenu * t = (PopupMenu*)user_data;
-	t->unclick(b, m, x, y);
-}
-
-static void popupmenu_motion_helper(void * user_data, int b, int m, int x, int y)
-{
-	PopupMenu * t = (PopupMenu*)user_data;
-	t->motion(b, m, x, y);
-}
-
-static void popupmenu_redraw_helper(cairo_t * cr, void * user_data)
-{
-	PopupMenu * t = (PopupMenu*)user_data;
-	t->redraw();
-}
-
 
 MenuBar::MenuBar(Window * parent, MenuData * d)
 	: Menu(d)
@@ -47,7 +21,7 @@ MenuBar::MenuBar(Window * parent, MenuData * d)
 	win = new Window(0, height, 0, 0, parent);
 	cairo_set_scaled_font(win->cr, menu_font);
 
-	win->set_click(menubar_click_helper, this);
+	win->set_click(bind(&MenuBar::click, this, _1, _2, _3, _4));
 
 	MenuData::iterator iter;
 	int cur_x = 0;
@@ -61,7 +35,7 @@ MenuBar::MenuBar(Window * parent, MenuData * d)
 	// add dummy menu entry at end of map.
 	menumap[cur_x] = NULL;
 	fprintf(stderr, "%d\n", cur_x);
-	win->set_redraw(menubar_redraw_helper, this);
+	win->set_redraw(bind(&MenuBar::redraw, this));
 }
 
 void MenuBar::redraw()
@@ -156,9 +130,9 @@ PopupMenu::PopupMenu(Window * parent, MenuData * d, Menu & pm, int x, int y)
 	renderbackpix();
 	// create the menubar subwindow
 	win = new MenuWindow(width, height, x, y, parent);
-	win->set_redraw(popupmenu_redraw_helper, this);
-	win->set_unclick(popupmenu_unclick_helper, this);
-	win->set_motion(popupmenu_motion_helper, this);
+	win->set_redraw(bind(&PopupMenu::redraw, this));
+	win->set_unclick(bind(&PopupMenu::unclick, this, _1, _2, _3, _4));
+	win->set_motion(bind(&PopupMenu::motion, this, _1, _2, _3, _4));
 	cairo_set_scaled_font(win->cr, menu_font);
 }
 
