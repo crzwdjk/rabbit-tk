@@ -1,7 +1,7 @@
 #include "global.hpp"
 #include "window.hpp"
 #include "atomcache.hpp"
-
+#include "keymap.hpp"
 
 xcb_connection_t * rtk_xcb_connection;
 xcb_screen_t * rtk_xcb_screen;
@@ -29,11 +29,18 @@ static void menu_font_init(cairo_t * cr)
 }
 
 xcb_key_symbols_t * rtk_keytable;
+Keymap * rtk_global_keybindings;
+
+static void keybindings_init()
+{
+	rtk_keytable = xcb_key_symbols_alloc(rtk_xcb_connection);
+	rtk_global_keybindings = new Keymap();
+}
 
 void rtk_global_init(int argc, char ** argv)
 {
 	xcb_connection_init();
-	rtk_keytable = xcb_key_symbols_alloc(rtk_xcb_connection);
+	keybindings_init();
 	Window tmp(0, 0);
 	menu_font_init(tmp.cr);
 }

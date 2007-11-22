@@ -143,10 +143,14 @@ MenuWindow::MenuWindow(int w, int h, int x, int y, Window * p)
 	// TODO: should be WM_TRANSIENT_FOR a toplevel window?
 	xcb_change_property(c, XCB_PROP_MODE_REPLACE, win_id,
 			    WM_TRANSIENT_FOR, WINDOW, 32, 1, &(p->win_id));
-
 	xcb_map_window(c, win_id);
+
+	// While the menu is up, it gets exclusive control of keyboard and mouse.
+	// though OS X doesn't seem to do it that way.
 	xcb_grab_pointer(c, 0, win_id, XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION,
 			 XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC,
 			 XCB_NONE, XCB_NONE, XCB_CURRENT_TIME);
+	xcb_grab_keyboard(c, 0, win_id, XCB_CURRENT_TIME, XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
+	xcb_set_input_focus(c, XCB_NONE, win_id, XCB_CURRENT_TIME); /* TODO: look into focus revert */
 	xcb_flush(c);
 }

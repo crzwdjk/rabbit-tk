@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "global.hpp"
+#include "keymap.hpp"
 
 static void add_event_to_mask(xcb_window_t win, uint32_t event)
 {
@@ -40,6 +41,7 @@ protected:
   winclick_t motion_cb;
   void * motion_data;
 
+  Keymap * keymap;
   unsigned int width, height;
   cairo_surface_t *surface;
   Window * parent;
@@ -74,6 +76,10 @@ public:
     motion_data = user_data;
     add_event_to_mask(win_id, XCB_EVENT_MASK_POINTER_MOTION);
   }
+  void set_keymap(Keymap * map) {
+    keymap = map;
+    add_event_to_mask(win_id, XCB_EVENT_MASK_KEY_PRESS);
+  }
 
   void get_abs_coords(int, int, int&, int&);
   void unclick(int b, int m, int x, int y)
@@ -91,7 +97,10 @@ class MenuWindow :public Window {
   unsigned int width, height;
 public:
   MenuWindow(int, int, int, int, Window *);
-  virtual ~MenuWindow() { xcb_ungrab_pointer(rtk_xcb_connection, XCB_CURRENT_TIME); }
+  virtual ~MenuWindow() {
+    xcb_ungrab_pointer(rtk_xcb_connection, XCB_CURRENT_TIME);
+    xcb_ungrab_keyboard(rtk_xcb_connection, XCB_CURRENT_TIME);
+  }
 };
 
 #endif

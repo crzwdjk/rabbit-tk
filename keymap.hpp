@@ -50,6 +50,7 @@ class Keymap {
   hash_map<rtk_key_t, key_action_t *> keymap;
   keybinding_t lookup_key(xcb_keycode_t code, uint8_t mods);
 public:
+  Keymap() {}
   void process_keypress(xcb_key_press_event_t *);
   void add_key_handler(const rtk_key_t &, key_action_t *);
 };
