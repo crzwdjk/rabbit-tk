@@ -115,9 +115,10 @@ void Keymap::process_keypress(xcb_key_press_event_t * event)
    and just plain q by keysym at the same time, but not for
    the S-q keycode and Q keysym.
 */
-void Keymap::add_key_handler(const rtk_key_t & key, key_action_t action)
+void Keymap::add_key_handler(key_action_t action, uint32_t sym, uint8_t mods)
 {
 	// TODO: check keysym-keycode conflict
+	rtk_key_t key = {sym, mods};
 	if((key.sym & RTK_KB_RAW_MASK) == RTK_KB_RAW_MASK) {
 		fprintf(stderr, "raw keybindings not supported yet\n");
 		return;

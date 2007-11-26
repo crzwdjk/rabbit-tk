@@ -18,6 +18,10 @@ const uint32_t RTK_KEY_ALL_PRINTABLE = 0x80000001;
 const uint32_t RTK_KB_RAW_MASK = 0xffffff00;
 
 const uint32_t RTK_KEY_ESC = 0xff1b;
+const uint32_t RTK_KEY_RET = 0xff0d;
+const uint32_t RTK_KEY_SPC = 0x20;
+const uint32_t RTK_KEY_UP = 0xff52;
+const uint32_t RTK_KEY_DN = 0xff54;
 
 struct rtk_key_t {
   xcb_keysym_t sym;
@@ -44,7 +48,7 @@ class Keymap {
 public:
   Keymap() {}
   void process_keypress(xcb_key_press_event_t *);
-  void add_key_handler(const rtk_key_t &, key_action_t);
+  void add_key_handler(key_action_t, uint32_t key, uint8_t mods = 0);
 };
 
 #endif

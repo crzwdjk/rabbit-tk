@@ -45,16 +45,20 @@ class PopupMenu : public Menu {
   Menu & parentmenu;
   bool unclicked;
   int itemheight, baseline, width, height;
-  MenuEntry * highlighted;
+  std::map<int, MenuEntry*>::iterator highlighted;
   void renderbackpix();
   Pixmap * back_pix;
+  void cancel();
+  void up();
+  void down();
+  void go();
+  Keymap * make_keymap();
 public:
   PopupMenu(Window * parent, MenuData *, Menu &, int, int);
   virtual ~PopupMenu();
   void redraw();
   void unclick(int, int, int, int);
   void motion(int, int, int, int);
-  void cancel();
   virtual void completion_cb() { /* TODO */ }
 };
 

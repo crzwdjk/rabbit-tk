@@ -103,42 +103,56 @@ void MenuBar::completion_cb()
 	redraw();
 }
 
-static Keymap * popupmenu_keymap(PopupMenu * p)
+Keymap * PopupMenu::make_keymap()
 {
 	Keymap * k = new Keymap();
-	rtk_key_t esc = {RTK_KEY_ESC, 0};
-	k->add_key_handler(esc, bind(&PopupMenu::cancel, p));
-	// TODO bind up
-	// TODO bind down
-	// TODO bind spc
-	// TODO bind ret
+	k->add_key_handler(bind(&PopupMenu::cancel, this), RTK_KEY_ESC);
+	k->add_key_handler(bind(&PopupMenu::down, this), RTK_KEY_DN);
+	k->add_key_handler(bind(&PopupMenu::up, this), RTK_KEY_UP);
+	k->add_key_handler(bind(&PopupMenu::go, this), RTK_KEY_SPC);
+	k->add_key_handler(bind(&PopupMenu::go, this), RTK_KEY_RET);
 	// TODO bind left
 	// TODO bind right
 	return k;
 }
 
-#if 0
-void PopupMenu::up(PopupMenu * p)
+// highlight previous item, skip over spacers and inactive items
+// if nothing is highlighted, start at the bottom
+void PopupMenu::up()
 {
-	// highlight previous item
+	if(highlighted != menumap.end() && highlighted != menumap.begin()) {
+		highlighted--;
+		redraw();
+	}
 }
 
-void PopupMenu::down(PopupMenu * p)
+// highlight next item, skip over spacers and inactive items
+// if nothing is highlighted start at the top
+void PopupMenu::down()
 {
-	// highlight next item
+	if(highlighted != menumap.end())
+		highlighted++;
+	else
+		highlighted = menumap.begin();
+	redraw();
 }
 
-#endif
 void PopupMenu::cancel()
 {
 	delete this;
 }
 
+void PopupMenu::go()
+{
+	MenuEntry * item = (*highlighted).second;
+	if(item->action) item->action();
+	delete this;
+}
 // popupmenu uses a menuwindow, which is an ovr-red window that grabs the keyboard and mouse
 // also a release handler for the left mouse button which triggers that menu.
 // TODO: get rid of trailing spacer.
 PopupMenu::PopupMenu(Window * parent, MenuData * d, Menu & pm, int x, int y)
-	: Menu(d), parentmenu(pm), unclicked(false), highlighted(NULL)
+	: Menu(d), parentmenu(pm), unclicked(false)
 {
 	itemheight = int(menu_font_extents.height) + MENU_BOTTOM_SPACE + MENU_TOP_SPACE;
 	baseline = itemheight - int(menu_font_extents.descent) - MENU_BOTTOM_SPACE;
@@ -152,9 +166,9 @@ PopupMenu::PopupMenu(Window * parent, MenuData * d, Menu & pm, int x, int y)
 		menumap[cur_y] = &(*iter);
 		cur_y += itemheight;
 		if(extents.x_advance > max_x) max_x = extents.x_advance;
+		fprintf(stderr, "%s: %d", (*iter).label, cur_y);
 	}
-	// add dummy menu entry at end of map.
-	menumap[cur_y] = NULL;
+	highlighted = menumap.end();
 
 	// figure out position and size
 	width = max_x + MENU_PRE_SPACE + MENU_POST_SPACE;
@@ -165,7 +179,7 @@ PopupMenu::PopupMenu(Window * parent, MenuData * d, Menu & pm, int x, int y)
 	win->set_redraw(bind(&PopupMenu::redraw, this));
 	win->set_unclick(bind(&PopupMenu::unclick, this, _1, _2, _3, _4));
 	win->set_motion(bind(&PopupMenu::motion, this, _1, _2, _3, _4));
-	win->set_keymap(popupmenu_keymap(this));
+	win->set_keymap(make_keymap());
 	cairo_set_scaled_font(win->cr, menu_font);
 }
 
@@ -204,19 +218,19 @@ void PopupMenu::redraw()
 	cairo_paint(cr);
 
 	// put in highlight if necessary
-	if(highlighted) {
-		fprintf(stderr, "highlighting %s\n", highlighted->label);
+	if(highlighted != menumap.end()) {
 		int hl_start;
 		map<int, MenuEntry *>::iterator i;
 		MenuEntry * e;
 		for(i = menumap.begin(); i != menumap.end(); i++) {
 			int x = (*i).first;
 			e = (*i).second;
-			if(e == highlighted) {
+			if(i == highlighted) {
 				hl_start = x;
 				break;
 			}
 		}
+		if(!e) return;
 		cairo_set_source_rgb(cr, 0.3, 0.3, 0.6); // TODO: color from config
 		cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 		cairo_rectangle(cr, 0, hl_start, width, itemheight);
@@ -254,24 +268,21 @@ void PopupMenu::unclick(int butt, int mod, int x, int y)
 }
 
 // TODO: moving around the parent menu
+// also, motion outside the menu should not change highlighting.
 void PopupMenu::motion(int butt, int mod, int x, int y)
 {
 	// figure out where the cursor is in our own menu
 	// has to be in 
-	MenuEntry * prev_highlighted = highlighted;
-	if(x < 0 || x > width || y < 0 || y > height) {
-		highlighted = NULL;
-	} else {
-		map<int, MenuEntry *>::iterator i = menumap.upper_bound(y);
-		i--;
-		highlighted = (*i).second;
-	}
-	if(highlighted != prev_highlighted) {
-		const char * oldl = prev_highlighted ? prev_highlighted->label : "nothing";
-		const char * newl = highlighted ? highlighted->label : "nothing";
-		fprintf(stderr, "changed from %s to %s", oldl, newl);
+	//MenuEntry * prev_highlighted = highlighted;
+	map<int, MenuEntry *>::iterator prev_highlighted = highlighted;
+	if(x < 0 || x > width || y < 0 || y > height)
+		return;
+
+	map<int, MenuEntry *>::iterator i = menumap.upper_bound(y);
+	i--;
+	highlighted = i; //(*i).second;
+	if(highlighted != prev_highlighted)
 		redraw();
-	}
 }
 
 PopupMenu::~PopupMenu() 
