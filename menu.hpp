@@ -6,11 +6,9 @@
 #include "window.hpp"
 #include "pixmap.hpp"
 
-using namespace std;
-
 struct MenuEntry;
 
-typedef vector<MenuEntry> MenuData;
+typedef std::vector<MenuEntry> MenuData;
 
 struct MenuEntry {
   char * label;
@@ -23,7 +21,7 @@ struct MenuEntry {
 
 class Menu {
 protected:
-  map<int, MenuEntry*> menumap;
+  std::map<int, MenuEntry*> menumap;
   MenuData * data;
 public:
   Menu(MenuData * d) : data(d) {}

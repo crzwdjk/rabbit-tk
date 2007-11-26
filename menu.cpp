@@ -5,6 +5,7 @@
 #include <tr1/functional>
 #include <functional>
 
+using namespace std;
 using namespace tr1;
 using namespace tr1::placeholders;
 

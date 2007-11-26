@@ -1,14 +1,10 @@
 #ifndef keymap_hpp
 #define keymap_hpp
 
-#include <vector>
 #include <ext/hash_map>
 #include <tr1/functional>
 #include <xcb/xcb.h>
 #include <xcb/xcb_keysyms.h>
-
-using namespace std;
-using namespace __gnu_cxx;
 
 enum rtk_kb_mods_t {
   RTK_KB_NOMOD = 0,
@@ -39,11 +35,11 @@ struct hash<rtk_key_t> {
 
 typedef std::tr1::function<void (rtk_key_t)> key_action_t;
 
-typedef pair<rtk_key_t, key_action_t> keybinding_t;
+typedef std::pair<rtk_key_t, key_action_t> keybinding_t;
 
 class Keymap {
   // map from keycode to keyhandler
-  hash_map<rtk_key_t, key_action_t> keymap;
+  __gnu_cxx::hash_map<rtk_key_t, key_action_t> keymap;
   keybinding_t lookup_key(xcb_keycode_t code, uint8_t mods);
 public:
   Keymap() {}

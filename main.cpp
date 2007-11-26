@@ -10,6 +10,7 @@
 #include "menu.hpp"
 #include "global.hpp"
 
+using namespace std;
 void win_redraw(cairo_t * cr)
 {
 	//	cairo_set_source_rgb(cr, 0.6, 0.6, 0.6);
