@@ -102,6 +102,37 @@ void MenuBar::completion_cb()
 	redraw();
 }
 
+static Keymap * popupmenu_keymap(PopupMenu * p)
+{
+	Keymap * k = new Keymap();
+	rtk_key_t esc = {RTK_KEY_ESC, 0};
+	k->add_key_handler(esc, bind(&PopupMenu::cancel, p));
+	// TODO bind up
+	// TODO bind down
+	// TODO bind spc
+	// TODO bind ret
+	// TODO bind left
+	// TODO bind right
+	return k;
+}
+
+#if 0
+void PopupMenu::up(PopupMenu * p)
+{
+	// highlight previous item
+}
+
+void PopupMenu::down(PopupMenu * p)
+{
+	// highlight next item
+}
+
+#endif
+void PopupMenu::cancel()
+{
+	delete this;
+}
+
 // popupmenu uses a menuwindow, which is an ovr-red window that grabs the keyboard and mouse
 // also a release handler for the left mouse button which triggers that menu.
 // TODO: get rid of trailing spacer.
@@ -133,6 +164,7 @@ PopupMenu::PopupMenu(Window * parent, MenuData * d, Menu & pm, int x, int y)
 	win->set_redraw(bind(&PopupMenu::redraw, this));
 	win->set_unclick(bind(&PopupMenu::unclick, this, _1, _2, _3, _4));
 	win->set_motion(bind(&PopupMenu::motion, this, _1, _2, _3, _4));
+	win->set_keymap(popupmenu_keymap(this));
 	cairo_set_scaled_font(win->cr, menu_font);
 }
 
@@ -239,6 +271,12 @@ void PopupMenu::motion(int butt, int mod, int x, int y)
 		fprintf(stderr, "changed from %s to %s", oldl, newl);
 		redraw();
 	}
+}
+
+PopupMenu::~PopupMenu() 
+{ 
+	parentmenu.completion_cb();
+	delete win; 
 }
 
 // TODO: menudata_from_yaml

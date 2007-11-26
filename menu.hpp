@@ -52,10 +52,11 @@ class PopupMenu : public Menu {
   Pixmap * back_pix;
 public:
   PopupMenu(Window * parent, MenuData *, Menu &, int, int);
-  virtual ~PopupMenu() { parentmenu.completion_cb(); delete win; }
+  virtual ~PopupMenu();
   void redraw();
   void unclick(int, int, int, int);
   void motion(int, int, int, int);
+  void cancel();
   virtual void completion_cb() { /* TODO */ }
 };
 

@@ -16,14 +16,14 @@ static xcb_keysym_t keysym_from_keycode(xcb_keycode_t code, uint8_t mods,
 {
 	// we care about mods.lock
 	// and mods.shift
-	int col = 1;
-	if(useshift && (mods & XCB_MOD_MASK_SHIFT)) col = 2;
+	int col = 0;
+	if(useshift && (mods & XCB_MOD_MASK_SHIFT)) col = 1;
 	xcb_keysym_t sym = xcb_key_symbols_get_keysym(rtk_keytable, code, col);
 	if(usecl && (mods & XCB_MOD_MASK_LOCK)) {
-		if(col == 1)
-			col = 2;
-		else
+		if(col == 0)
 			col = 1;
+		else
+			col = 0;
 		sym = xcb_key_symbols_get_keysym(rtk_keytable, code, col);
 	}
 	return sym;
@@ -97,8 +97,8 @@ void Keymap::process_keypress(xcb_key_press_event_t * event)
 {
 	keybinding_t b = lookup_key(event->detail, event->state & 0xff);
 	rtk_key_t k = b.first;
-	key_action_t * hnd = b.second;
-	if(hnd) (*hnd)(k);
+	key_action_t hnd = b.second;
+	if(hnd) hnd(k);
 }
 
 /* Attempt to add a key handler for the given rtk_key_t.
@@ -115,10 +115,10 @@ void Keymap::process_keypress(xcb_key_press_event_t * event)
    and just plain q by keysym at the same time, but not for
    the S-q keycode and Q keysym.
 */
-void Keymap::add_key_handler(const rtk_key_t & key, key_action_t * action)
+void Keymap::add_key_handler(const rtk_key_t & key, key_action_t action)
 {
 	// TODO: check keysym-keycode conflict
-	if(key.sym & RTK_KB_RAW_MASK) {
+	if((key.sym & RTK_KB_RAW_MASK) == RTK_KB_RAW_MASK) {
 		fprintf(stderr, "raw keybindings not supported yet\n");
 		return;
 	}

@@ -28,6 +28,7 @@ static void add_event_to_mask(xcb_window_t win, uint32_t event)
 
 typedef std::tr1::function<void (cairo_t *)> winredraw_t;
 typedef std::tr1::function<void (int b, int m, int x, int y)> winclick_t;
+typedef std::tr1::function<void (xcb_key_press_event_t *)> keypress_t;
 
 class Window {
 protected:
@@ -38,6 +39,7 @@ protected:
   winclick_t click_cb;
   winclick_t unclick_cb;
   winclick_t motion_cb;
+  keypress_t keypress_cb;
 
   Keymap * keymap;
   unsigned int width, height;
@@ -73,7 +75,7 @@ public:
     keymap = map;
     add_event_to_mask(win_id, XCB_EVENT_MASK_KEY_PRESS);
   }
-
+  void keypress(xcb_key_press_event_t * t) { keymap->process_keypress(t); }
   void get_abs_coords(int, int, int&, int&);
   virtual ~Window();
   friend class MenuWindow;

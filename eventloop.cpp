@@ -90,7 +90,13 @@ void rtk_process_one_event(xcb_generic_event_t * e)
 	}
 	case XCB_KEY_PRESS:
 	{
-
+		xcb_key_press_event_t * key = (xcb_key_press_event_t *)e;
+		fprintf(stderr, "key pressed\n");
+		// TODO: check against global map
+		// if that didn't work, dispatch to window
+		if(windows.find(key->event) == windows.end()) return;
+		windows[key->event]->keypress(key);
+		break;
 	}
 	case XCB_MAPPING_NOTIFY:
 		xcb_refresh_keyboard_mapping(rtk_keytable,

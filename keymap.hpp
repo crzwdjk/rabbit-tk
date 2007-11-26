@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <ext/hash_map>
+#include <tr1/functional>
 #include <xcb/xcb.h>
 #include <xcb/xcb_keysyms.h>
 
@@ -20,6 +21,7 @@ const uint32_t RTK_PRIVATE_KEYSYM_FLAG = 0x80000000;
 const uint32_t RTK_KEY_ALL_PRINTABLE = 0x80000001;
 const uint32_t RTK_KB_RAW_MASK = 0xffffff00;
 
+const uint32_t RTK_KEY_ESC = 0xff1b;
 
 struct rtk_key_t {
   xcb_keysym_t sym;
@@ -35,24 +37,18 @@ struct hash<rtk_key_t> {
   }
 };}
 
-//typedef void (*key_action_t)(void *, rtk_key_t);
+typedef std::tr1::function<void (rtk_key_t)> key_action_t;
 
-struct key_action_t {
-  void (*hnd)(void *, rtk_key_t);
-  void * data;
-  void operator()(rtk_key_t k) { hnd(data, k); }
-};
-
-typedef pair<rtk_key_t, key_action_t *> keybinding_t;
+typedef pair<rtk_key_t, key_action_t> keybinding_t;
 
 class Keymap {
   // map from keycode to keyhandler
-  hash_map<rtk_key_t, key_action_t *> keymap;
+  hash_map<rtk_key_t, key_action_t> keymap;
   keybinding_t lookup_key(xcb_keycode_t code, uint8_t mods);
 public:
   Keymap() {}
   void process_keypress(xcb_key_press_event_t *);
-  void add_key_handler(const rtk_key_t &, key_action_t *);
+  void add_key_handler(const rtk_key_t &, key_action_t);
 };
 
 #endif
