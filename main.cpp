@@ -4,13 +4,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <tr1/functional>
+
 #include "window.hpp"
 #include "eventloop.hpp"
 #include "atomcache.hpp"
 #include "menu.hpp"
 #include "global.hpp"
+#include "popup.hpp"
 
 using namespace std;
+using namespace tr1;
+using namespace tr1::placeholders;
+
 void win_redraw(cairo_t * cr)
 {
 	//	cairo_set_source_rgb(cr, 0.6, 0.6, 0.6);
@@ -44,20 +50,26 @@ void win_redraw(cairo_t * cr)
 	cairo_fill (cr);
 }
 
-void about()
+const char * about_text = \
+	"RTK Demo\n"\
+	"Version 0.0.1"\
+	"Copyright © 2007 Arcady Goldmints-Orlov";
+
+void about(ToplevelWindow * w)
 {
 	fprintf(stderr, "About\n");
+	new Popup(about_text, "About Box", w);
 }
 
 void exit_program()
 {
 	exit(0);
 }
-MenuData * make_menu()
+MenuData * make_menu(ToplevelWindow * w)
 {
 	vector<MenuEntry> * menu = new vector<MenuEntry>;
 	vector<MenuEntry> * helpMenu = new vector<MenuEntry>;
-	MenuEntry ab = {"About", NULL, &about};
+	MenuEntry ab = {"About", NULL, bind(&about, w)};
 	helpMenu->push_back(ab);
 	MenuData * fileMenu = new MenuData;
 	MenuEntry ratherlong = {"Something rather long to test spacing", NULL, NULL};
@@ -80,7 +92,7 @@ int main (int argc, char ** argv)
   rtk_global_init(argc, argv);
 
   ToplevelWindow w(400, 400, "fish fish fish");
-  MenuBar m(&w, make_menu());
+  MenuBar m(&w, make_menu(&w));
   w.set_redraw(&win_redraw);
   
   rtk_main_event_loop();

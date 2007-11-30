@@ -154,3 +154,31 @@ MenuWindow::MenuWindow(int w, int h, int x, int y, Window * p)
 	xcb_set_input_focus(c, XCB_NONE, win_id, XCB_CURRENT_TIME); /* TODO: look into focus revert */
 	xcb_flush(c);
 }
+
+
+PopupWindow::PopupWindow(int w, int h, const char* name, ToplevelWindow * toplevel)
+	: Window(w, h)
+{
+	xcb_connection_t * c = rtk_xcb_connection;
+
+	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
+			     WM_NAME, STRING, 8,
+			     strlen (name), name);
+	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
+			     WM_ICON_NAME, STRING, 8,
+			     strlen (name), name);
+	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
+			     atoms["_NET_WM_NAME"], STRING, 8,
+			     strlen (name), name);
+	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
+			     atoms["_NET_WM_ICON_NAME"], STRING, 8,
+			     strlen (name), name);
+	xcb_atom_t t = atoms["_NET_WM_WINDOW_TYPE_DIALOG"];
+	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
+			     atoms["_NET_WM_WINDOW_TYPE"], ATOM, 32,
+			     1, &t);
+        xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
+			     WM_TRANSIENT_FOR, WINDOW, 32,
+			     1, &(toplevel->win_id));
+	// TODO: set WM_NORMAL_HINTS, WM_HINTS
+}

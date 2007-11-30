@@ -84,9 +84,10 @@ public:
 class ToplevelWindow : public Window {
 public:
   ToplevelWindow(int, int, char*);
+  friend class PopupWindow;
 };
 
-class MenuWindow :public Window {
+class MenuWindow : public Window {
   unsigned int width, height;
 public:
   MenuWindow(int, int, int, int, Window *);
@@ -94,6 +95,13 @@ public:
     xcb_ungrab_pointer(rtk_xcb_connection, XCB_CURRENT_TIME);
     xcb_ungrab_keyboard(rtk_xcb_connection, XCB_CURRENT_TIME);
   }
+};
+
+class PopupWindow : public Window {
+  unsigned int width, height;
+public:
+  PopupWindow(int, int, const char *, ToplevelWindow *);
+  virtual ~PopupWindow() { }
 };
 
 #endif

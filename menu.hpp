@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <map>
+#include <tr1/functional>
 #include "window.hpp"
 #include "pixmap.hpp"
 
@@ -15,8 +16,8 @@ struct MenuEntry {
   MenuData * submenu;
   // TODO: pixmap
   // TODO: keycombo
-  void (*action)();
-  bool operator==(MenuEntry o) {return label == o.label && submenu == o.submenu &&action == o.action; }
+  std::tr1::function<void ()> action;
+  bool operator==(MenuEntry o) {return label == o.label && submenu == o.submenu; }
 };
 
 class Menu {
