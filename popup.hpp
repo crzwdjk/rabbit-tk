@@ -2,10 +2,11 @@
 #define popup_hpp
 
 #include <string>
+#include <vector>
 #include "window.hpp"
 
 class Popup {
-  std::string label;
+  std::vector<std::string> label;
   PopupWindow * win;
   void redraw(); // draw the label.
   void die() { delete this; }

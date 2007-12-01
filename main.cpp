@@ -52,7 +52,7 @@ void win_redraw(cairo_t * cr)
 
 const char * about_text = \
 	"RTK Demo\n"\
-	"Version 0.0.1"\
+	"Version 0.0.1\n"\
 	"Copyright © 2007 Arcady Goldmints-Orlov";
 
 void about(ToplevelWindow * w)
