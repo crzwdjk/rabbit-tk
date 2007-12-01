@@ -102,6 +102,8 @@ void rtk_process_one_event(xcb_generic_event_t * e)
 		xcb_refresh_keyboard_mapping(rtk_keytable,
 					     (xcb_mapping_notify_event_t*)e);
 		break;
+	case XCB_NO_EXPOSURE:
+		break;
 	default:
 		fprintf(stderr, "unknown event %d\n", e->response_type & ~0x80);
 		break;
