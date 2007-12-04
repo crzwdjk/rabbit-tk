@@ -32,8 +32,6 @@ typedef std::tr1::function<void (xcb_key_press_event_t *)> keypress_t;
 
 class Window {
 protected:
-  xcb_window_t win_id;
-
   winredraw_t redraw_cb;
   void * redraw_data;
   winclick_t click_cb;
@@ -45,9 +43,10 @@ protected:
   unsigned int width, height;
   cairo_surface_t *surface;
   Window * parent;
+  Window() : win_id(xcb_generate_id(rtk_xcb_connection)) { }
 public:
   cairo_t *cr;
-  Window() {}
+  const xcb_window_t win_id;
   Window(int, int, int = 0, int = 0, Window * = NULL);
   void set_redraw(winredraw_t f) { redraw_cb = f; redraw(0, 0, width, height); }
   void redraw(int, int, int, int) {
@@ -78,13 +77,11 @@ public:
   void keypress(xcb_key_press_event_t * t) { keymap->process_keypress(t); }
   void get_abs_coords(int, int, int&, int&);
   virtual ~Window();
-  friend class MenuWindow;
 };
 
 class ToplevelWindow : public Window {
 public:
   ToplevelWindow(int, int, char*);
-  friend class PopupWindow;
 };
 
 class MenuWindow : public Window {

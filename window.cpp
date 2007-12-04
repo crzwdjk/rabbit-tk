@@ -36,12 +36,12 @@ static xcb_visualtype_t * find_visual_for_id(xcb_screen_t * s)
 }
 
 Window::Window(int w, int h, int x, int y, Window * p)
-	: width(w), height(h), parent(p)
+	: width(w), height(h), parent(p), win_id(xcb_generate_id(rtk_xcb_connection))
+
 {
 	xcb_connection_t * c = rtk_xcb_connection;
 	xcb_screen_t * screen = rtk_xcb_screen;
 
-	win_id = xcb_generate_id(c);
 	uint32_t values[2];
 	uint32_t mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
 	values[0] = p ? 0xffccffcc : 0xffcccccc; // XXX: change to conf setting
@@ -115,7 +115,6 @@ MenuWindow::MenuWindow(int w, int h, int x, int y, Window * p)
 	xcb_connection_t * c = rtk_xcb_connection;
 	xcb_screen_t * screen = rtk_xcb_screen;
 
-	win_id = xcb_generate_id(c);
 	uint32_t mask = 0;
 	uint32_t values[2];
 
