@@ -64,9 +64,9 @@ public:
     unclick_cb = f;
     add_event_to_mask(win_id, XCB_EVENT_MASK_BUTTON_RELEASE);
   }
-  void unclick(int b, int m, int x, int y) { unclick_cb(b, m, x, y); }
+  virtual void unclick(int b, int m, int x, int y) { unclick_cb(b, m, x, y); }
   void motion(int b, int m, int x, int y) { motion_cb(b, m, x, y); }
-  void set_motion(winclick_t f) {
+  virtual void set_motion(winclick_t f) {
     motion_cb = f;
     add_event_to_mask(win_id, XCB_EVENT_MASK_POINTER_MOTION);
   }
@@ -101,4 +101,12 @@ public:
   virtual ~PopupWindow() { }
 };
 
+class ButtonWindow : public Window {
+  unsigned int width, height;
+public:
+  ButtonWindow(int, int, int, int, Window *);
+  virtual void unclick(int, int, int, int);
+  virtual void set_motion(winclick_t f) { motion_cb = f; }
+  virtual ~ButtonWindow() {}
+};
 #endif

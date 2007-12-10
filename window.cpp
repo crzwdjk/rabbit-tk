@@ -181,3 +181,19 @@ PopupWindow::PopupWindow(int w, int h, const char* name, ToplevelWindow * toplev
 			     1, &(toplevel->win_id));
 	// TODO: set WM_NORMAL_HINTS, WM_HINTS
 }
+
+ButtonWindow::ButtonWindow(int w, int h, int x, int y, Window * p)
+	: Window(w, h, x, y, p)
+{
+	// set passive grab.
+	xcb_grab_button(rtk_xcb_connection, 0, this->win_id,
+			XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION,
+			XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC, XCB_NONE, XCB_NONE, 1, 0);
+}
+
+void ButtonWindow::unclick(int b, int m, int x, int y)
+{
+	// release active grab
+	xcb_ungrab_pointer(rtk_xcb_connection, XCB_CURRENT_TIME);
+	Window::unclick(b, m, x, y);
+}
