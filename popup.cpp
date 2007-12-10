@@ -24,9 +24,10 @@ vector<string> splitlines(const char * text)
 	return s;
 }
 
-const int BOTTOM_SPACE = 2;
-const int TOP_SPACE = 3;
+const int BOTTOM_SPACE = 1;
+const int TOP_SPACE = 2;
 const int PRE_SPACE = 5;
+const int BUTT_PAD = 6;
 
 pair<int, int> measure_text(vector<string> lines)
 {
@@ -64,11 +65,15 @@ Popup::Popup(const char * text, const char * title, ToplevelWindow * w) : label(
 { 
 	cairo_text_extents_t extents;
 	cairo_scaled_font_text_extents(menu_font, text, &extents);
-
 	pair<int, int> text_size = measure_text(label);
-	win = new PopupWindow(text_size.first, text_size.second + 20, title, w); 
-	//new Button("OK"); Button.focus(); 
-	win->set_unclick(bind(&Popup::die, this));
+
+	butt = new Button("OK", bind(&Popup::die, this));
+	pair<int, int> butt_size = butt->get_size();
+
+	win = new PopupWindow(text_size.first, text_size.second + butt_size.second + BUTT_PAD * 2, title, w);
+	butt->place(win, text_size.first / 2, text_size.second + BUTT_PAD, TOP);
+
+	//Button.focus();
 	win->set_redraw(bind(&Popup::redraw, this));
 }
 

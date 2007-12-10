@@ -4,10 +4,12 @@
 #include <string>
 #include <vector>
 #include "window.hpp"
+#include "button.hpp"
 
 class Popup {
   std::vector<std::string> label;
   PopupWindow * win;
+  Button * butt;
   void redraw(); // draw the label.
   void die() { delete this; }
 public:
