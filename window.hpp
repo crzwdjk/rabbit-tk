@@ -26,6 +26,22 @@ static void add_event_to_mask(xcb_window_t win, uint32_t event)
   xcb_flush(c);
 }
 
+static void remove_event_from_mask(xcb_window_t win, uint32_t event)
+{
+  xcb_connection_t * c = rtk_xcb_connection;
+  xcb_get_window_attributes_cookie_t cookie = xcb_get_window_attributes(c, win);
+  xcb_generic_error_t * er = NULL;
+  xcb_get_window_attributes_reply_t * attrs = xcb_get_window_attributes_reply(c, cookie, &er);
+  if(er != NULL) {
+    fprintf(stderr, "xcb error %d\n", er->error_code);
+    exit(1);
+  }
+  uint32_t mask = attrs->your_event_mask & ~event;
+  xcb_change_window_attributes(c, win, XCB_CW_EVENT_MASK, &mask);
+  free(attrs);
+  xcb_flush(c);
+}
+
 typedef std::tr1::function<void (cairo_t *)> winredraw_t;
 typedef std::tr1::function<void (int b, int m, int x, int y)> winclick_t;
 typedef std::tr1::function<void (xcb_key_press_event_t *)> keypress_t;
@@ -59,16 +75,20 @@ public:
     click_cb = f;
     add_event_to_mask(win_id, XCB_EVENT_MASK_BUTTON_PRESS);
   }
-  void click(int b, int m, int x, int y) { click_cb(b, m, x, y); }
+  void click(int b, int m, int x, int y) { if(click_cb) click_cb(b, m, x, y); }
   void set_unclick(winclick_t f) {
     unclick_cb = f;
     add_event_to_mask(win_id, XCB_EVENT_MASK_BUTTON_RELEASE);
   }
   virtual void unclick(int b, int m, int x, int y) { unclick_cb(b, m, x, y); }
-  void motion(int b, int m, int x, int y) { motion_cb(b, m, x, y); }
-  virtual void set_motion(winclick_t f) {
+  void motion(int b, int m, int x, int y) { if(motion_cb) motion_cb(b, m, x, y); }
+  void set_motion(winclick_t f, bool add = true) {
     motion_cb = f;
-    add_event_to_mask(win_id, XCB_EVENT_MASK_POINTER_MOTION);
+    if(f)
+      if(add)
+	add_event_to_mask(win_id, XCB_EVENT_MASK_POINTER_MOTION);
+    else
+      remove_event_from_mask(win_id, XCB_EVENT_MASK_POINTER_MOTION);
   }
   void set_keymap(Keymap * map) {
     keymap = map;
@@ -106,7 +126,6 @@ class ButtonWindow : public Window {
 public:
   ButtonWindow(int, int, int, int, Window *);
   virtual void unclick(int, int, int, int);
-  virtual void set_motion(winclick_t f) { motion_cb = f; }
   virtual ~ButtonWindow() {}
 };
 #endif
