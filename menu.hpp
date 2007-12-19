@@ -20,12 +20,16 @@ struct MenuEntry {
   bool operator==(MenuEntry o) {return label == o.label && submenu == o.submenu; }
 };
 
+class PopupMenu;
+
 class Menu {
 protected:
   std::map<int, MenuEntry*> menumap;
   MenuData * data;
+  PopupMenu * active_submenu;
+  MenuEntry * active_item;
 public:
-  Menu(MenuData * d) : data(d) {}
+  Menu(MenuData * d) : data(d), active_submenu(NULL) {}
   virtual void completion_cb() = 0;
   virtual ~Menu() {}
 };

@@ -49,7 +49,7 @@ void Button::click(int, int)
 	// highlight button
 	// this also activates a passive grab in the X code
 	highlight();
-	win->set_motion(bind(&Button::motion, this, _3, _4));
+	win->set_motion(bind(&Button::motion, this, _3, _4), false);
 	fprintf(stderr, "button clicked\n");
 }
 

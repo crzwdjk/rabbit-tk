@@ -70,9 +70,13 @@ void MenuBar::click(int butt, int mod, int x, int y)
 	i--;
 	MenuEntry * item = (*i).second;
 	int hl_start = (*i).first;
-	if(item == NULL)
+	if(item == NULL || item == active_item)
 		return;
 
+	if(active_submenu)
+                delete active_submenu;
+
+        win->set_motion(bind(&MenuBar::motion, this, _1, _2, _3, _4));
 	// highlight clicked entry
 	cairo_t * cr = win->cr;
 	fprintf(stderr, "%s\n", item->label);
@@ -94,8 +98,10 @@ void MenuBar::click(int butt, int mod, int x, int y)
 	int pu_x = (abs_x - x) + hl_start;
 	int pu_y = (abs_y - y) + height;
 
-	PopupMenu * p = new PopupMenu(win, item->submenu, *this, pu_x, pu_y);
-	(void)p; // the PopupMenu will eventually delete itself
+	assert(active_submenu == NULL);
+	active_submenu = new PopupMenu(win, item->submenu, *this, pu_x, pu_y);
+	fprintf(stderr, "active item %p -> %p\n", active_item, item);
+	this->active_item = item;
 }
 
 void MenuBar::motion(int b, int m, int x, int y)
@@ -105,6 +111,9 @@ void MenuBar::motion(int b, int m, int x, int y)
 }
 void MenuBar::completion_cb()
 {
+	active_submenu = NULL;
+	active_item = NULL;
+	win->set_motion(NULL);
 	redraw();
 }
 
