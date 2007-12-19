@@ -98,6 +98,11 @@ void MenuBar::click(int butt, int mod, int x, int y)
 	(void)p; // the PopupMenu will eventually delete itself
 }
 
+void MenuBar::motion(int b, int m, int x, int y)
+{
+	// for now, just click.
+	click(b, m, x, y);
+}
 void MenuBar::completion_cb()
 {
 	redraw();

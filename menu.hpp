@@ -33,10 +33,11 @@ public:
 class MenuBar : public Menu {
   Window * win;
   int baseline, height;
+  void motion(int, int, int, int);
+  void click(int butt, int mod, int x, int y);
+  void redraw();
 public:
   MenuBar(Window * parent, MenuData *);
-  void redraw();
-  void click(int butt, int mod, int x, int y);
   virtual void completion_cb();
   virtual ~MenuBar() { delete win; }
 };
