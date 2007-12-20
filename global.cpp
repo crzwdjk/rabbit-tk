@@ -2,14 +2,15 @@
 #include "window.hpp"
 #include "atomcache.hpp"
 #include "keymap.hpp"
+#include <xcb/xcb_aux.h>
 
 xcb_connection_t * rtk_xcb_connection;
 xcb_screen_t * rtk_xcb_screen;
 
 static void xcb_connection_init()
 {
-	rtk_xcb_connection = xcb_connect (NULL, NULL);
-	rtk_xcb_screen = xcb_setup_roots_iterator(xcb_get_setup(rtk_xcb_connection)).data;
+	rtk_xcb_connection = xcb_connect(NULL, NULL);
+	rtk_xcb_screen = xcb_aux_get_screen(rtk_xcb_connection, 0);
 	atoms.bind(rtk_xcb_connection);
 }
 

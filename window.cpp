@@ -1,6 +1,7 @@
 #include <map>
 #include <xcb/xcb.h>
 #include <xcb/xcb_atom.h>
+#include <xcb/xcb_aux.h>
 #include "window.hpp"
 #include "atomcache.hpp"
 
@@ -15,25 +16,6 @@ extern std::map<xcb_window_t, Window *> windows;
    AppWindow
    Popup
 */
-
-static xcb_visualtype_t * find_visual_for_id(xcb_screen_t * s)
-{
-	xcb_depth_iterator_t iter = xcb_screen_allowed_depths_iterator(s);
-	int ndepths = xcb_screen_allowed_depths_length(s);
-	for(int i = 0; i < ndepths; i++) {
-		if(iter.data->depth == s->root_depth) break;
-		xcb_depth_next(&iter);
-	}
-
-
-	int numvis = xcb_depth_visuals_length(iter.data);
-	xcb_visualtype_t * visuals = xcb_depth_visuals(iter.data);
-
-	for(int i = 0; i < numvis; i++)
-		if(visuals[i].visual_id == s->root_visual)
-			return visuals + i;
-	return NULL;
-}
 
 Window::Window(int w, int h, int x, int y, Window * p)
 	: width(w), height(h), parent(p), win_id(xcb_generate_id(rtk_xcb_connection))
@@ -56,7 +38,8 @@ Window::Window(int w, int h, int x, int y, Window * p)
 	
 	windows[win_id] = this;
 
-	surface = cairo_xcb_surface_create(c, win_id, find_visual_for_id(screen),
+	surface = cairo_xcb_surface_create(c, win_id,
+					   xcb_aux_find_visual_by_id(screen, screen->root_visual),
 					   w, h);
 	cr = cairo_create (surface);
 
@@ -129,7 +112,7 @@ MenuWindow::MenuWindow(int w, int h, int x, int y, Window * p)
 	windows[win_id] = this;
 
 	surface = cairo_xcb_surface_create(c, win_id,
-					   find_visual_for_id(screen),
+					   xcb_aux_find_visual_by_id(screen, screen->root_visual),
 					   w, h);
 	cr = cairo_create (surface);
 
