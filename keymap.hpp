@@ -20,7 +20,9 @@ const uint32_t RTK_KB_RAW_MASK = 0xffffff00;
 const uint32_t RTK_KEY_ESC = 0xff1b;
 const uint32_t RTK_KEY_RET = 0xff0d;
 const uint32_t RTK_KEY_SPC = 0x20;
+const uint32_t RTK_KEY_LT = 0xff51;
 const uint32_t RTK_KEY_UP = 0xff52;
+const uint32_t RTK_KEY_RT = 0xff53;
 const uint32_t RTK_KEY_DN = 0xff54;
 
 struct rtk_key_t {
