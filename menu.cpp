@@ -72,7 +72,10 @@ void MenuBar::popup()
 	if(active_submenu) {
                 delete active_submenu;
 		redraw();
+		active_submenu = NULL;
 	}
+	if(active_item == menumap.end()) return;
+
         win->set_motion(bind(&MenuBar::motion, this, _1, _2, _3, _4));
 
 	// highlight clicked entry
