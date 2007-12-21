@@ -94,6 +94,7 @@ int main (int argc, char ** argv)
   ToplevelWindow w(400, 400, "fish fish fish");
   MenuBar m(&w, make_menu(&w));
   w.set_redraw(&win_redraw);
+  w.set_del(bind(&exit, 0));
   
   rtk_main_event_loop();
 

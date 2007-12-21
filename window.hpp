@@ -45,6 +45,7 @@ static void remove_event_from_mask(xcb_window_t win, uint32_t event)
 typedef std::tr1::function<void (cairo_t *)> winredraw_t;
 typedef std::tr1::function<void (int b, int m, int x, int y)> winclick_t;
 typedef std::tr1::function<void (xcb_key_press_event_t *)> keypress_t;
+typedef std::tr1::function<void (uint32_t)> delcb_t;
 
 class Window {
 protected:
@@ -54,6 +55,7 @@ protected:
   winclick_t unclick_cb;
   winclick_t motion_cb;
   keypress_t keypress_cb;
+  delcb_t del_cb;
 
   Keymap * keymap;
   unsigned int width, height;
@@ -95,6 +97,8 @@ public:
     add_event_to_mask(win_id, XCB_EVENT_MASK_KEY_PRESS);
   }
   void keypress(xcb_key_press_event_t * t) { keymap->process_keypress(t); }
+  void del_window(uint32_t t) { if(del_cb) del_cb(t); }
+  void set_del(delcb_t d) { del_cb = d; }
   void get_abs_coords(int, int, int&, int&);
   virtual ~Window();
 };

@@ -1,5 +1,6 @@
 #include <map>
 #include "window.hpp"
+#include "atomcache.hpp"
 
 using namespace std;
 
@@ -19,6 +20,8 @@ void rtk_process_one_event(xcb_generic_event_t * e);
  */
 
 map<xcb_window_t, Window *> windows;
+
+void process_client_message(xcb_client_message_event_t * e);
 
 void rtk_main_event_loop()
 {
@@ -104,12 +107,28 @@ void rtk_process_one_event(xcb_generic_event_t * e)
 		break;
 	case XCB_NO_EXPOSURE:
 		break;
+	case XCB_CLIENT_MESSAGE:
+		process_client_message((xcb_client_message_event_t*)e);
+		break;
 	default:
 		fprintf(stderr, "unknown event %d\n", e->response_type & ~0x80);
 		break;
 	}
 	free(e);
 
+}
+
+void process_client_message(xcb_client_message_event_t * e)
+{
+	if(e->type == atoms["WM_PROTOCOLS"]) {
+		// data[0] is protocol
+		// TODO: do something with data[1] == timestamp
+		uint32_t timestamp = e->data.data32[1];
+		if(e->data.data32[0] == atoms["WM_DELETE_WINDOW"]) {
+			if(windows.find(e->window) == windows.end()) return;
+			windows[e->window]->del_window(timestamp);
+		}
+	}
 }
 
 /* for the threading stuff, we need an atomic queue construct,

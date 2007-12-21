@@ -75,6 +75,7 @@ Popup::Popup(const char * text, const char * title, ToplevelWindow * w) : label(
 
 	//Button.focus();
 	win->set_redraw(bind(&Popup::redraw, this));
+	win->set_del(bind(&Popup::die, this));
 }
 
 void Popup::redraw()

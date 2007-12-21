@@ -2,6 +2,7 @@
 #include <xcb/xcb.h>
 #include <xcb/xcb_atom.h>
 #include <xcb/xcb_aux.h>
+#include <xcb/xcb_icccm.h>
 #include "window.hpp"
 #include "atomcache.hpp"
 
@@ -88,6 +89,9 @@ ToplevelWindow::ToplevelWindow(int w, int h, char* name)
 	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
 			     atoms["_NET_WM_WINDOW_TYPE"], ATOM, 32,
 			     1, &t);
+	xcb_atom_t wm_protocols[] = { atoms["WM_DELETE_WINDOW"] };
+	// TODO: other protocols: _NET_WM_PING, WM_TAKE_FOCUS?
+	xcb_set_wm_protocols(c, win_id, 1, wm_protocols);
 	// TODO: set WM_NORMAL_HINTS, WM_HINTS
 }
 
@@ -164,6 +168,8 @@ PopupWindow::PopupWindow(int w, int h, const char* name, ToplevelWindow * toplev
 			     WM_TRANSIENT_FOR, WINDOW, 32,
 			     1, &(toplevel->win_id));
 	// TODO: set WM_NORMAL_HINTS, WM_HINTS
+	xcb_atom_t wm_protocols[] = { atoms["WM_DELETE_WINDOW"] };
+	xcb_set_wm_protocols(c, win_id, 1, wm_protocols);
 }
 
 ButtonWindow::ButtonWindow(int w, int h, int x, int y, Window * p)
