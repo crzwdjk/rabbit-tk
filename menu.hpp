@@ -10,6 +10,7 @@
 struct MenuEntry;
 
 typedef std::vector<MenuEntry> MenuData;
+typedef std::map<int, MenuEntry*>::iterator menu_iter_t;
 
 struct MenuEntry {
   char * label;
@@ -27,10 +28,12 @@ protected:
   std::map<int, MenuEntry*> menumap;
   MenuData * data;
   PopupMenu * active_submenu;
-  MenuEntry * active_item;
+  menu_iter_t active_item;
 public:
   Menu(MenuData * d) : data(d), active_submenu(NULL) {}
   virtual void completion_cb() = 0;
+  virtual void next() = 0;
+  virtual void prev() = 0;
   virtual ~Menu() {}
 };
 
@@ -40,10 +43,14 @@ class MenuBar : public Menu {
   void motion(int, int, int, int);
   void click(int butt, int mod, int x, int y);
   void redraw();
+  void highlight(int, int, const char *);
+  void popup();
 public:
   MenuBar(Window * parent, MenuData *);
   virtual void completion_cb();
   virtual ~MenuBar() { delete win; }
+  virtual void next();
+  virtual void prev();
 };
 
 class PopupMenu : public Menu {
@@ -51,12 +58,11 @@ class PopupMenu : public Menu {
   Menu & parentmenu;
   bool unclicked;
   int itemheight, baseline, width, height;
-  std::map<int, MenuEntry*>::iterator highlighted;
   void renderbackpix();
   Pixmap * back_pix;
   void cancel();
-  void up();
-  void down();
+  virtual void next();
+  virtual void prev();
   void go();
   Keymap * make_keymap();
 public:
