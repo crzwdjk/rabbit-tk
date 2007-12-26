@@ -93,12 +93,16 @@ keybinding_t Keymap::lookup_key(xcb_keycode_t code, uint8_t mods)
 	return keybinding_t(regkey, NULL);
 }
 
-void Keymap::process_keypress(xcb_key_press_event_t * event)
+bool Keymap::process_keypress(xcb_key_press_event_t * event)
 {
 	keybinding_t b = lookup_key(event->detail, event->state & 0xff);
 	rtk_key_t k = b.first;
 	key_action_t hnd = b.second;
-	if(hnd) hnd(k);
+	if(hnd) {
+		hnd(k);
+		return true;
+	}
+	else return false;
 }
 
 /* Attempt to add a key handler for the given rtk_key_t.

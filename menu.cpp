@@ -12,6 +12,21 @@ using namespace tr1::placeholders;
 const int MENU_PRE_SPACE = 5, MENU_POST_SPACE = 5;
 const int MENU_BOTTOM_SPACE = 1, MENU_TOP_SPACE = 2;
 
+/* install the keybindings specified in the entries of d and its submenus
+   into the global keymap. */
+static void install_keybinding(const MenuData & d)
+{
+	MenuData::const_iterator iter;
+	for(iter = d.begin(); iter != d.end(); iter++) {
+		const MenuEntry & e = *iter;
+		if(!(e.keycombo == RTK_NO_KEY))
+			rtk_global_keybindings->add_key_handler(bind(e.action), e.keycombo);
+		if(e.submenu)
+			install_keybinding(*e.submenu);
+	}
+
+}
+
 MenuBar::MenuBar(Window * parent, MenuData * d)
 	: Menu(d)
 {
@@ -27,12 +42,14 @@ MenuBar::MenuBar(Window * parent, MenuData * d)
 	MenuData::iterator iter;
 	int cur_x = 0;
 	for(iter = d->begin(); iter != d->end(); iter++) {
+		MenuEntry & e = *iter;
 		cairo_text_extents_t extents;
-		cairo_text_extents(win->cr, (*iter).label, &extents);
+		cairo_text_extents(win->cr, e.label, &extents);
 		cur_x += extents.x_advance + MENU_PRE_SPACE + MENU_POST_SPACE;;
-		menumap[cur_x] = &(*iter);
+		menumap[cur_x] = &e;
 	}
 	active_item = menumap.end();
+	install_keybinding(*d);
 	win->set_redraw(bind(&MenuBar::redraw, this));
 }
 

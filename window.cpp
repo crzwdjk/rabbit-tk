@@ -72,7 +72,8 @@ ToplevelWindow::ToplevelWindow(int w, int h, char* name)
 	: Window(w, h)
 {
 	xcb_connection_t * c = rtk_xcb_connection;
-	
+
+	add_event_to_mask(win_id, XCB_EVENT_MASK_KEY_PRESS);
 	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
 			     WM_NAME, STRING, 8,
 			     strlen (name), name);

@@ -96,7 +96,7 @@ public:
     keymap = map;
     add_event_to_mask(win_id, XCB_EVENT_MASK_KEY_PRESS);
   }
-  void keypress(xcb_key_press_event_t * t) { keymap->process_keypress(t); }
+  void keypress(xcb_key_press_event_t * t) { if(keymap) keymap->process_keypress(t); }
   void del_window(uint32_t t) { if(del_cb) del_cb(t); }
   void set_del(delcb_t d) { del_cb = d; }
   void get_abs_coords(int, int, int&, int&);

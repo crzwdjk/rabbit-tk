@@ -1,6 +1,7 @@
 #include <map>
 #include "window.hpp"
 #include "atomcache.hpp"
+#include "global.hpp"
 
 using namespace std;
 
@@ -94,9 +95,8 @@ void rtk_process_one_event(xcb_generic_event_t * e)
 	case XCB_KEY_PRESS:
 	{
 		xcb_key_press_event_t * key = (xcb_key_press_event_t *)e;
-		fprintf(stderr, "key pressed\n");
-		// TODO: check against global map
-		// if that didn't work, dispatch to window
+		if(rtk_global_keybindings->process_keypress(key))
+			return;
 		if(windows.find(key->event) == windows.end()) return;
 		windows[key->event]->keypress(key);
 		break;

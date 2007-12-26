@@ -16,7 +16,7 @@ struct MenuEntry {
   char * label;
   MenuData * submenu;
   // TODO: pixmap
-  // TODO: keycombo
+  rtk_key_t keycombo;
   std::tr1::function<void ()> action;
   bool operator==(MenuEntry o) {return label == o.label && submenu == o.submenu; }
 };
