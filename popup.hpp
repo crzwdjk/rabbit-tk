@@ -12,6 +12,7 @@ class Popup {
   Button * butt;
   void redraw(); // draw the label.
   void die() { delete this; }
+  Keymap * make_keymap();
 public:
   Popup(const char * text, const char * title, ToplevelWindow *);
   virtual ~Popup() { delete win; }

@@ -76,6 +76,7 @@ Popup::Popup(const char * text, const char * title, ToplevelWindow * w) : label(
 	//Button.focus();
 	win->set_redraw(bind(&Popup::redraw, this));
 	win->set_del(bind(&Popup::die, this));
+	win->set_keymap(make_keymap());
 }
 
 void Popup::redraw()
@@ -90,4 +91,13 @@ void Popup::redraw()
 	cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
 	cairo_move_to(cr, 0, 5);
 	draw_text(label, cr);
+}
+
+Keymap * Popup::make_keymap()
+{
+	Keymap * k = new Keymap();
+	k->add_key_handler(bind(&Popup::die, this), RTK_KEY_ESC);
+	k->add_key_handler(bind(&Popup::die, this), RTK_KEY_SPC);
+	k->add_key_handler(bind(&Popup::die, this), RTK_KEY_RET);
+	return k;
 }
