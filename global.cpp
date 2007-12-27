@@ -31,6 +31,7 @@ static void menu_font_init(cairo_t * cr)
 
 xcb_key_symbols_t * rtk_keytable;
 Keymap * rtk_global_keybindings;
+extern "C" const char * rtk_version_string = "0.0.1";
 
 static void keybindings_init()
 {
@@ -38,7 +39,7 @@ static void keybindings_init()
 	rtk_global_keybindings = new Keymap();
 }
 
-void rtk_global_init(int argc, char ** argv)
+extern "C" void rtk_global_init(int argc, char ** argv)
 {
 	xcb_connection_init();
 	keybindings_init();

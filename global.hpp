@@ -16,7 +16,8 @@ extern xcb_screen_t * rtk_xcb_screen;
 extern xcb_key_symbols_t * rtk_keytable;
 extern Keymap * rtk_global_keybindings;
 
-extern void rtk_global_init(int argc, char ** argv);
+extern "C" void rtk_global_init(int argc, char ** argv);
+extern "C" const char * rtk_version_string;
 
 static inline void rtk_flush_surface(cairo_t * cr)
 {

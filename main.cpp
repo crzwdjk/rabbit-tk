@@ -58,7 +58,10 @@ const char * about_text = \
 void about(ToplevelWindow * w)
 {
 	fprintf(stderr, "About\n");
-	new Popup(about_text, "About Box", w);
+	char * about_buf = new char[strlen(about_text) + strlen(rtk_version_string) + 50];
+	sprintf(about_buf, "%s\nRTK version: %s", about_text, rtk_version_string);
+	new Popup(about_buf, "About Box", w);
+	free(about_buf);
 }
 
 void exit_program()
