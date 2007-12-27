@@ -15,6 +15,7 @@ pair<int, int> text_bbox(string line)
 Button::Button(const char * l, std::tr1::function<void ()> a)
 	: label(l), win(NULL), highlighted(false), action(a)
 {
+	pressed = false;
 	// TODO: expandable buttons
 	width = 80, height = 20;
 	pair<int, int> t = text_bbox(label);
@@ -38,10 +39,11 @@ void Button::place(Window * parent, int x, int y, alignment_t align)
 	case BOTTOM: ry = y - height; rx = x - width/2; break;
 	case BOTTOMRIGHT: ry = y - height; rx = x - width; break;
 	}
-	win = new ButtonWindow(width, height, rx, ry, parent);
+	win = new Window(width, height, rx, ry, parent);
 	win->set_redraw(bind(&Button::redraw, this));
 	win->set_click(bind(&Button::click, this, _3, _4));
 	win->set_unclick(bind(&Button::unclick, this, _3, _4));
+	win->set_motion(bind(&Button::motion, this, _3, _4));
 }
 
 void Button::click(int, int)
@@ -50,7 +52,7 @@ void Button::click(int, int)
 	// this also activates a passive grab in the X code
 	highlight();
 	win->set_motion(bind(&Button::motion, this, _3, _4), false);
-	fprintf(stderr, "button clicked\n");
+	pressed = true;
 }
 
 void Button::redraw()
@@ -77,6 +79,7 @@ bool Button::inside(int x, int y) { return x >= 0 && x < width && y >= 0 && y < 
 void Button::motion(int x, int y)
 {
 	// highlight button if mouse is in. coords reported relative to button, so
+	if(!pressed) return;
 	if(inside(x, y) && !highlighted) {
 		highlight();
 	}
@@ -91,4 +94,5 @@ void Button::unclick(int x, int y)
 	if(inside(x, y)) 
 		action();
 	unhighlight();
+	pressed = false;
 }

@@ -23,7 +23,7 @@ enum alignment_t {
 class Button {
   std::string label;
   Window * win;
-  bool highlighted;
+  bool highlighted, pressed;
   bool inside(int, int);
   void redraw();
   void click(int, int);

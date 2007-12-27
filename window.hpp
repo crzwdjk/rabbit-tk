@@ -125,11 +125,4 @@ public:
   virtual ~PopupWindow() { }
 };
 
-class ButtonWindow : public Window {
-  unsigned int width, height;
-public:
-  ButtonWindow(int, int, int, int, Window *);
-  virtual void unclick(int, int, int, int);
-  virtual ~ButtonWindow() {}
-};
 #endif
