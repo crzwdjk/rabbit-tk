@@ -105,11 +105,10 @@ public:
 
 class ToplevelWindow : public Window {
 public:
-  ToplevelWindow(int, int, char*);
+  ToplevelWindow(int, int, const char*);
 };
 
 class MenuWindow : public Window {
-  unsigned int width, height;
 public:
   MenuWindow(int, int, int, int, Window *);
   virtual ~MenuWindow() {
@@ -119,7 +118,6 @@ public:
 };
 
 class PopupWindow : public Window {
-  unsigned int width, height;
 public:
   PopupWindow(int, int, const char *, ToplevelWindow *);
   virtual ~PopupWindow() { }

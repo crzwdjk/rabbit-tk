@@ -68,7 +68,7 @@ Window::~Window()
 }
 
 
-ToplevelWindow::ToplevelWindow(int w, int h, char* name)
+ToplevelWindow::ToplevelWindow(int w, int h, const char* name)
 	: Window(w, h)
 {
 	xcb_connection_t * c = rtk_xcb_connection;
@@ -98,11 +98,12 @@ ToplevelWindow::ToplevelWindow(int w, int h, char* name)
 
 
 MenuWindow::MenuWindow(int w, int h, int x, int y, Window * p)
-	: width(w), height(h)
 {
 	xcb_connection_t * c = rtk_xcb_connection;
 	xcb_screen_t * screen = rtk_xcb_screen;
 
+	width = w;
+	height = h;
 	uint32_t mask = 0;
 	uint32_t values[2];
 
