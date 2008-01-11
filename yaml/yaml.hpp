@@ -23,6 +23,12 @@ struct Yval {
   bool operator==(const Yval & o) const { return !memcmp(this, &o, sizeof(Yval)); }
 };
 
+static inline bool is_scalar(Yval & v)
+{ 
+  return v.type == YSTR || v.type == YINT || v.type == YFLT || v.type == YTRUE 
+    || v.type == YFALSE || v.type == YNIL;
+}
+
 /* hash function for Yval so we can have hash_maps of Yvals */
 namespace __gnu_cxx {
   template<>
@@ -35,4 +41,6 @@ namespace __gnu_cxx {
 
 /* parses the data from a filedescriptor into a Yval */
 Yval parse(int fd);
+
+char * yaml_fd_to_bytecode(int fd);
 #endif
