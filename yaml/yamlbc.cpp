@@ -91,6 +91,18 @@ static char * skip_line(char * stream)
 	return stream;
 }
 
+static inline Yval pop(vector<Yval> & st)
+{
+	Yval t = *(st.end() - 1);
+	st.pop_back();
+	return t;
+}
+
+static inline Yval top(vector<Yval> & st)
+{ 
+	return *(st.end() - 1);
+}
+
 /* Parse a string of YAML bytecode. The parser is pretty much a stack
    machine, with states defined by enum parse_state.
    TODO: recursive maps
@@ -99,7 +111,7 @@ static char * skip_line(char * stream)
 */
 Yval ybc_parse(char * stream)
 {
-	stack<Yval> st;
+	vector<Yval> st;
 	parse_state state = START;
 	Ytype type = YUNK;
 	Yval key;
@@ -119,14 +131,14 @@ Yval ybc_parse(char * stream)
 		case 'Q':
 			v.type = YSEQ;
 			v.v.q = new vector<Yval>;
-			st.push(v);
+			st.push_back(v);
 			state = Q;
 			break;
 		/* start of mapping */
 		case 'M':
 			v.type = YMAP;
 			v.v.m = new hash_map<Yval, Yval>;
-			st.push(v);
+			st.push_back(v);
 			state = M;
 			break;
 		/* scalar value */
@@ -163,7 +175,7 @@ Yval ybc_parse(char * stream)
 			switch(state) {
 			// Q, QS -> add S to cur.v.q -> QS
 			case Q: case QS:
-				st.top().v.q->push_back(v);
+				top(st).v.q->push_back(v);
 				state = QS;
 				break;
 			// M -> key = S -> MK
@@ -173,7 +185,7 @@ Yval ybc_parse(char * stream)
 				break;
 			// MK -> cur.v.m[key] = S => MV
 			case MK:
-				(*st.top().v.m)[key] = v;
+				(*top(st).v.m)[key] = v;
 				state = MV;
 				break;
 			case START:
@@ -186,7 +198,7 @@ Yval ybc_parse(char * stream)
 			switch(state) {
 			// add C to cur.v.q[-1]
 			case QS: {
-				vector<Yval> & tgt = (*st.top().v.q);
+				vector<Yval> & tgt = (*top(st).v.q);
 				dest = &(tgt[tgt.size() - 1]);
 				break;
 			}
@@ -197,7 +209,7 @@ Yval ybc_parse(char * stream)
 			}
 			// add C to cur.v.m[key]
 			case MV: {
-				hash_map<Yval, Yval> & tgt = (*st.top().v.m);
+				hash_map<Yval, Yval> & tgt = (*top(st).v.m);
 				dest = &(tgt[key]);
 				break;
 			}
@@ -216,19 +228,20 @@ Yval ybc_parse(char * stream)
 		/* end of current collection */
 		case 'E': 
 			// add current collection to the end of the previous one.
-			// skip newline
-			stream++;
-			if(state == MK) throw ParseError("Map must have even number of elements!");
-			v = st.top(); st.pop();
+			if(state == MK) throw ParseError("Map key must have value");
+			v = pop(st);
 			if(st.size() == 0) return v;
-			Yval tos = st.top();
+			Yval tos = top(st);
 			switch(tos.type) {
 			case YSEQ:
 				tos.v.q->push_back(v);
 				state = Q;
 				break;
 			default:
-				key = st.top(); st.pop(); state = MK;
+				key = pop(st);
+				assert(top(st).type == YMAP);
+				(*top(st).v.m)[key] = v;
+				state = MV;
 			}
 			// case Q, QS, M, MV -> pop, add to end of whatever is now TOS
 			// case MK -> error
@@ -245,7 +258,7 @@ Yval ybc_parse(char * stream)
 		assert(*stream == '\n');
 		stream++;
 	}
-	return st.top();
+	return *(st.end() - 1);
 }
 
 /* read all the data from a file descriptor and convert it to YAML bytecode. */
