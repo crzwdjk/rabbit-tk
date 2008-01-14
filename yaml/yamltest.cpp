@@ -35,18 +35,19 @@ string dump_map(hash_map<Yval, Yval> &v, int indent)
 	string buf = "\n";
 	for(iter = v.begin(); iter != v.end(); iter++) {
 		pair<Yval, Yval> p = *iter;
-		buf += ydump(p.first, 0) + ": " + ydump(p.second, indent + indent_depth);
+		for(int i = 0; i < indent; i++) buf += ' ';
+		buf += ydump(p.first, 0) + ": " + ydump(p.second, indent + indent_depth) + "\n";
 	}
 	return buf;
 }
 
-string ydump(Yval v, int indent = 0)
+string ydump(Yval v, int indent)
 {
 	char * buf;
 	string str;
 	switch(v.type) {
 	case YSTR:
-		asprintf(&buf, "\"%s\"", v.v.s);
+		asprintf(&buf, "\"%s\"", v.v.s->c_str());
 		str += buf; free(buf);
 		break;
 	case YINT:
