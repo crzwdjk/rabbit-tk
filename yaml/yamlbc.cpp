@@ -80,7 +80,7 @@ static char * yappend(Yval & dest, char * src)
 {
 	assert(dest.type == YSTR);
 	while(*src && *src != '\n')
-		dest.v.s += *src++;
+		*dest.v.s += *src++;
 	return src;
 }
 
@@ -109,7 +109,7 @@ Yval ybc_parse(char * stream)
 		/* read the bytecode */
 		char code = *stream++;
 		/* stream now points to the data for that bytecode */
-		Yval v;
+		Yval v; v.v.i = 0;
 		switch(code) {
 		/* transfer-type tag */
 		case 'T':
@@ -128,12 +128,14 @@ Yval ybc_parse(char * stream)
 			v.v.m = new hash_map<Yval, Yval>;
 			st.push(v);
 			state = M;
+			break;
 		/* scalar value */
 		case 'S':
 			v.type = type;
 			/* extract the scalar data, depending on the type */
 			switch(v.type) {
 			case YSTR:
+				v.v.s = new string();
 				stream = yappend(v, stream); 
 				break;
 			case YTRUE: case YFALSE: case YNIL:
@@ -150,6 +152,7 @@ Yval ybc_parse(char * stream)
 				break;
 			default:
 				v.type = YSTR;
+				v.v.s = new string();
 				stream = yappend(v, stream);
 				//throw ParseError("unknown scalar type\n");
 			}
@@ -172,6 +175,7 @@ Yval ybc_parse(char * stream)
 			case MK:
 				(*st.top().v.m)[key] = v;
 				state = MV;
+				break;
 			case START:
 				return v; // TODO: but what about C-lines?
 			}
