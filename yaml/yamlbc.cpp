@@ -132,6 +132,10 @@ Yval ybc_parse(char * stream, bool trace = false)
 			break;
 		/* start of sequence */
 		case 'Q':
+			if(state == M || state == MV)
+				throw ParseError("sequences not allowed as mapping keys");
+			if(state == MK)
+				st.push_back(key);
 			v.type = YSEQ;
 			v.v.q = new vector<Yval>;
 			st.push_back(v);
@@ -139,6 +143,11 @@ Yval ybc_parse(char * stream, bool trace = false)
 			break;
 		/* start of mapping */
 		case 'M':
+			if(state == M || state == MV)
+				throw ParseError("mappings not allowed as mapping keys");
+			if(state == MK) {
+				st.push_back(key);
+			}
 			v.type = YMAP;
 			v.v.m = new hash_map<Yval, Yval>;
 			st.push_back(v);
