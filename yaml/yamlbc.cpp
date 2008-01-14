@@ -6,8 +6,10 @@
    simplified bytecode format, which ybc_parse() parses into a recursive
    structure made of Yvals.
    
-   Currently supported bytecodes include D, M, Q, E, S, C, T.
-   Not yet supported are N, Z, A, R, nor the format and hint codes.
+   Currently supported bytecodes include D, M, Q, E, S, C, T, N, Z.
+   Not yet supported are A, R, nor the format and hint codes.
+
+   TODO: support aliases and references
 */
 
 
@@ -60,20 +62,21 @@ struct ParseError {
 
 /* Read a YAML typestring and return the corresponding Ytype, using the
    typemap. Returns pointer to the end of the line.
-   TODO: change prototype to be like strtod. call strtoytype?
  */
-static char * parse_type(char * stream, Ytype & type)
+static Ytype strtotype(char * stream, char ** end)
 {
+	// static char * parse_type(char * stream, Ytype & type)
 	string t;
+	Ytype type = YUNK;
 	while(*stream && *stream != '\n') t += *stream++;
 	for(unsigned int i = 0; i < sizeof(typemap)/sizeof(tm_entry); i++) {
 		if(typemap[i].name == t) {
 			type = typemap[i].type;
-			return stream;
+			break;
 		}
 	}
-	type = YUNK;
-	return stream;
+	*end = stream;
+	return type;
 }
 
 /* read src until \n or \0, concatenate it onto dest.
@@ -106,11 +109,68 @@ static inline Yval top(vector<Yval> & st)
 	return *(st.end() - 1);
 }
 
+static Yval * pick_dest(parse_state state, vector<Yval> & st, Yval * key)
+{
+	Yval * dest;
+	vector<Yval> & tgt_vec = (*top(st).v.q);
+	hash_map<Yval, Yval> & tgt_map = (*top(st).v.m);
+	switch(state) {
+	// dest is the last element of the TOS vector
+	case QS:
+		dest = &(tgt_vec[tgt_vec.size() - 1]);
+		break;
+	// dest is key
+	case MK:
+		dest = key;
+		break;
+	// dest is last element added to TOS map;
+	case MV:
+		dest = &(tgt_map[*key]);
+		break;
+	default:
+		throw ParseError("C, N, or Z line given when there is nothing to continue");
+	}
+	if(dest->type != YSTR)
+		throw ParseError("C, N, or Z line given for non-string value");
+	return dest;
+}
+
+/* extract scalar data from stream, depending on the type */
+Yval parse_scalar(char * stream, char ** end, Ytype type)
+{
+	Yval v;
+	v.type = type;
+	switch(v.type) {
+	case YSTR:
+		v.v.s = new string();
+		stream = yappend(v, stream);
+		break;
+	case YTRUE: case YFALSE: case YNIL:
+		stream = skip_line(stream);
+		break;
+	case YFLT:
+		/* TODO: WARNING! WARNING! strtod is locale sensitive,
+		   but syck's output presumably isn't. being lazy for now, but
+		   it needs fixing eventually. */
+		v.v.f = strtod(stream, &stream);
+		break;
+	case YINT:
+		v.v.i = strtol(stream, &stream, 10);
+		break;
+	default:
+		/* unknown scalar types are treated as strings */
+		v.type = YSTR;
+		v.v.s = new string();
+		stream = yappend(v, stream);
+	}
+	*end = stream;
+	return v;
+}
+
 /* Parse a string of YAML bytecode. The parser is pretty much a stack
    machine, with states defined by enum parse_state.
-   TODO: recursive maps
-   TODO: N and Z lines
-   TODO: refactor to make this function shorter and more comprehensible.
+   The stack is used to keep track of nested collections. A map is stored
+   as two entries on the stack: the map itself, and then the current key.
 */
 Yval ybc_parse(char * stream, bool trace = false)
 {
@@ -128,7 +188,7 @@ Yval ybc_parse(char * stream, bool trace = false)
 		switch(code) {
 		/* transfer-type tag */
 		case 'T':
-			stream = parse_type(stream, type);
+			type = strtotype(stream, &stream);
 			break;
 		/* start of sequence */
 		case 'Q':
@@ -155,37 +215,13 @@ Yval ybc_parse(char * stream, bool trace = false)
 			break;
 		/* scalar value */
 		case 'S':
-			v.type = type;
-			/* extract the scalar data, depending on the type */
-			switch(v.type) {
-			case YSTR:
-				v.v.s = new string();
-				stream = yappend(v, stream); 
-				break;
-			case YTRUE: case YFALSE: case YNIL:
-				stream = skip_line(stream);
-				break;
-			case YFLT:
-				/* TODO: WARNING! WARNING! strtod is locale sensitive,
-				   but syck's output presumably isn't. being lazy for now, but
-				   it needs fixing eventually. */
-				v.v.f = strtod(stream, &stream);
-				break;
-			case YINT:
-				v.v.i = strtol(stream, &stream, 10);
-				break;
-			default:
-				v.type = YSTR;
-				v.v.s = new string();
-				stream = yappend(v, stream);
-				//throw ParseError("unknown scalar type\n");
-			}
+			v = parse_scalar(stream, &stream, type);
 			/* reset the type */
 			type = YUNK;
 
 			/* where we have to put the scalar depends on the current state */
 			switch(state) {
-			// Q, QS -> add S to cur.v.q -> QS
+			// Q, QS -> add S to top-of-stack vector -> QS
 			case Q: case QS:
 				top(st).v.q->push_back(v);
 				state = QS;
@@ -206,36 +242,13 @@ Yval ybc_parse(char * stream, bool trace = false)
 			break;
 		/* continuation line for a scalar */
 		case 'C':
-			Yval * dest;
-			switch(state) {
-			// add C to cur.v.q[-1]
-			case QS: {
-				vector<Yval> & tgt = (*top(st).v.q);
-				dest = &(tgt[tgt.size() - 1]);
-				break;
-			}
-			// add C to key
-			case MK: {
-				dest = &key;
-				break;
-			}
-			// add C to cur.v.m[key]
-			case MV: {
-				hash_map<Yval, Yval> & tgt = (*top(st).v.m);
-				dest = &(tgt[key]);
-				break;
-			}
-			default:
-				throw ParseError("C line given when there is nothing to continue");
-			}
-			if(dest->type != YSTR)
-				throw ParseError("C line given for non-string value");
-			stream = yappend(*dest, stream);
+			stream = yappend(*pick_dest(state, st, &key), stream);
 			break;
 		case 'N':
-			// add a newline (mostly like C)
+			pick_dest(state, st, &key)->v.s += '\n';
+			break;
 		case 'Z':
-			// add a null (mostly like C)
+			pick_dest(state, st, &key)->v.s += '\0';
 			break;
 		/* end of current collection */
 		case 'E': 
@@ -255,8 +268,6 @@ Yval ybc_parse(char * stream, bool trace = false)
 				(*top(st).v.m)[key] = v;
 				state = MV;
 			}
-			// case Q, QS, M, MV -> pop, add to end of whatever is now TOS
-			// case MK -> error
 			break;
 		case 'D':
 			assert(state == START);
@@ -271,7 +282,7 @@ Yval ybc_parse(char * stream, bool trace = false)
 		stream++;
 		if(trace) {
 			fprintf(stderr, "state %d, stack has:", state);
-			for(int i = 0; i < st.size(); i++) {
+			for(unsigned int i = 0; i < st.size(); i++) {
 				fprintf(stderr, " %s", ytype_names[st[i].type]);
 			}
 			fprintf(stderr, "  <- TOP\n");
