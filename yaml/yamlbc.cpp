@@ -37,6 +37,9 @@ static tm_entry typemap[] = {
 	{"tag:rabbit-tk.yaml.org,2002:config", YCONFFILE},
 };
 
+char * ytype_names[] = { "???", "str", "int", "float", "seq", "map", "true", "false", "nil", "top" };
+
+
 /* These are the states for the parser's state machine. The reason we need
    to differentiate between Q and QS or M and MV is so we know whether we have
    something to add a continuation line to. Maybe this is unnecessary since
@@ -109,7 +112,7 @@ static inline Yval top(vector<Yval> & st)
    TODO: N and Z lines
    TODO: refactor to make this function shorter and more comprehensible.
 */
-Yval ybc_parse(char * stream)
+Yval ybc_parse(char * stream, bool trace = false)
 {
 	vector<Yval> st;
 	parse_state state = START;
@@ -257,6 +260,13 @@ Yval ybc_parse(char * stream)
 		   gotten a final 'E' and returned already */
 		assert(*stream == '\n');
 		stream++;
+		if(trace) {
+			fprintf(stderr, "state %d, stack has:", state);
+			for(int i = 0; i < st.size(); i++) {
+				fprintf(stderr, " %s", ytype_names[st[i].type]);
+			}
+			fprintf(stderr, "  <- TOP\n");
+		}
 	}
 	return *(st.end() - 1);
 }
@@ -280,12 +290,12 @@ char * yaml_fd_to_bytecode(int fd)
 
 /* read the data from fd, and return the Yval that represents the structure
    contained in the YAML in fd. */
-Yval parse(int fd)
+Yval parse(int fd, bool trace)
 {
 	char * bytecode = yaml_fd_to_bytecode(fd);
 	Yval ret;
 	try {
-		ret = ybc_parse(bytecode);
+		ret = ybc_parse(bytecode, trace);
 	}
 	catch(ParseError p) {
 		fprintf(stderr, "Parse error: %s\n", p.text);

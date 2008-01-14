@@ -8,6 +8,8 @@
 
 /* the possible types for a Yval */
 enum Ytype { YUNK = 0, YSTR, YINT, YFLT, YSEQ, YMAP, YTRUE, YFALSE, YNIL, YCONFFILE };
+/* names of the yval types, for debugging purposes */
+extern char * ytype_names[];
 
 /* Yval represents a YAML value. It is our way of representing YAML's loosely 
    typed data in the strictly typed system of C++ */
@@ -40,7 +42,9 @@ namespace __gnu_cxx {
 }
 
 /* parses the data from a filedescriptor into a Yval */
-Yval parse(int fd);
+Yval parse(int fd, bool trace = false);
 
 char * yaml_fd_to_bytecode(int fd);
+
+std::string ydump(Yval, int = 0);
 #endif
