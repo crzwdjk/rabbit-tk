@@ -12,5 +12,9 @@ all: main
 main: $(OBJFILES)
 	$(LD) $(LDFLAGS) $(OBJFILES) -o $@
 
+# rule to compile a YAML file into a .o
+%_yaml.o: %.yaml
+	perl yaml/yaml2c.pl $< rtk_$*_yaml | gcc -c -x c - -o $@
+
 clean:
 	rm -f $(OBJFILES) main
