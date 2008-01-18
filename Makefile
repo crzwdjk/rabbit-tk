@@ -5,7 +5,7 @@ INCLUDES=-I/usr/local/include/cairo -I/usr/local/include -I/usr/include/freetype
 CXXFLAGS=-Wall -g $(INCLUDES)
 LD=g++
 OBJFILES=main.o window.o eventloop.o atomcache.o menu.o global.o pixmap.o keymap.o popup.o \
-          button.o yaml/yamlbc.o
+          button.o config.o yaml/yamlbc.o config_yaml.o
 
 all: main
 

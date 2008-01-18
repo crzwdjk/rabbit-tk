@@ -44,6 +44,9 @@ namespace __gnu_cxx {
 /* parses the data from a filedescriptor into a Yval */
 Yval parse(int fd, bool trace = false);
 
+/* parses the date from a string into a Yval */
+Yval parse(char *, bool trace = false);
+
 char * yaml_fd_to_bytecode(int fd);
 
 std::string ydump(Yval, int = 0);

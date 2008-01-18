@@ -11,7 +11,7 @@ sub munge_name($)
 
 open my $IN, $ARGV[0] or die "Couldn't open file!";
 my $name = munge_name($ARGV[1]);
-print "const char $name [] = {\n";
+print "char $name [] = {\n";
 my $count = 0;
 my $ch;
 while() {

@@ -324,3 +324,18 @@ Yval parse(int fd, bool trace)
 	free(bytecode);
 	return ret;
 }
+
+Yval parse(char * str, bool trace)
+{
+	char * bytecode = syck_yaml2byte(str);
+	Yval ret;
+	try {
+		ret = ybc_parse(bytecode, trace);
+	}
+	catch(ParseError p) {
+		fprintf(stderr, "Parse error: %s\n", p.text);
+		exit(1);
+	}
+	free(bytecode);
+	return ret;
+}

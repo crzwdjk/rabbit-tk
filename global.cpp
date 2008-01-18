@@ -14,6 +14,8 @@ static void xcb_connection_init()
 	atoms.bind(rtk_xcb_connection);
 }
 
+extern void rtk_config_init();
+
 cairo_scaled_font_t * menu_font;
 cairo_font_extents_t menu_font_extents;
 
@@ -41,6 +43,7 @@ static void keybindings_init()
 
 extern "C" void rtk_global_init(int argc, char ** argv)
 {
+	rtk_config_init();
 	xcb_connection_init();
 	keybindings_init();
 	Window tmp(0, 0);
