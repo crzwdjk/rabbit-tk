@@ -28,7 +28,7 @@ extern "C" char rtk_config_yaml[];
    values are merged recursively.
 */
 
-void merge(Yval & dst, Yval & src)
+static void merge(Yval & dst, Yval & src)
 {
 	if(dst.type != src.type) return;
 	if(dst.type != YMAP) return;
@@ -44,7 +44,7 @@ void merge(Yval & dst, Yval & src)
 	}
 }
 
-bool rtk_config_merge_file(Yval & config, const char * filename)
+static bool rtk_config_merge_file(Yval & config, const char * filename)
 {
 	int fd = open(filename, O_RDONLY);
 	if(fd == -1) return false;
