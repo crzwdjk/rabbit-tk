@@ -56,7 +56,7 @@ bool rtk_config_merge_file(Yval & config, const char * filename)
 
 static void write_file(char * data, const char * file)
 {
-	int fd = open(file, O_WRONLY|O_CREAT|O_EXCL);
+	int fd = open(file, O_WRONLY|O_CREAT|O_EXCL, 0644);
 	if(fd == -1) return;
 	int len = strlen(data);
 	write(fd, data, len);
