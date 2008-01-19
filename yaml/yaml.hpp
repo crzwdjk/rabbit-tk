@@ -5,6 +5,7 @@
 #include <vector>
 #include <ext/hash_map>
 #include <string.h>
+#include <tr1/functional>
 
 /* the possible types for a Yval */
 enum Ytype { YUNK = 0, YSTR, YINT, YFLT, YSEQ, YMAP, YTRUE, YFALSE, YNIL, YCONFFILE };
@@ -22,7 +23,11 @@ struct Yval {
     std::vector<Yval> * q;
     __gnu_cxx::hash_map<Yval, Yval> * m;
   } v;
-  bool operator==(const Yval & o) const { return !memcmp(this, &o, sizeof(Yval)); }
+  bool operator==(const Yval & o) const {
+    if(type != o.type) return false;
+    if(type == YSTR) return *v.s == *o.v.s;
+    return !memcmp(this, &o, sizeof(Yval));
+  }
 };
 
 static inline bool is_scalar(Yval & v)
@@ -36,6 +41,9 @@ namespace __gnu_cxx {
   template<>
   struct hash<Yval> {
     size_t operator()(Yval x) const {
+      std::tr1::hash<std::string> h;
+      if(x.type == YSTR)
+	return h(*x.v.s);
       return x.v.i;
     }
   };
