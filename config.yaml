@@ -1,7 +1,11 @@
 --- !rabbit-tk/config
 # menu_bg, menu_highlight, menu_highlight_text, font, fg_color
 appearance:
-    background: "#555555"
-    text-color: "#000000"
-    menu-highlight: "#5555aa"
-    highlight-text: "#000000"
+    background: #aaaaaa
+    text-color: #000000
+    button-color: #ffffff
+    menu-highlight: #5555aa
+    highlight-text: #ffffff
+    main-font:
+        face: sans
+        size: 10
