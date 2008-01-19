@@ -1,4 +1,5 @@
 #include <tr1/functional>
+#include "config.hpp"
 #include "button.hpp"
 
 using namespace std;
@@ -60,16 +61,12 @@ void Button::redraw()
 	cairo_t * cr = win->cr;
 	// if highlighted, white on black, else black on white
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-	if(highlighted)
-		cairo_set_source_rgb(cr, 0, 0, 0);
-	else
-		cairo_set_source_rgb(cr, 1, 1, 1);
+	rtk_config_set_color(cr, highlighted ? "appearance\ntext-color"
+			                     : "appearance\nbutton-color");
 	cairo_paint(cr);
 
-	if(highlighted)
-		cairo_set_source_rgb(cr, 1, 1, 1);
-	else
-		cairo_set_source_rgb(cr, 0, 0, 0);
+	rtk_config_set_color(cr, highlighted ? "appearance\nbutton-color"
+			                     : "appearance\ntext-color");
 	cairo_move_to(cr, text_base_x, text_base_y);
 	cairo_show_text(cr, label.c_str());
 }

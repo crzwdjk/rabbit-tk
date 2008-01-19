@@ -1,5 +1,6 @@
 #include "menu.hpp"
 #include "global.hpp"
+#include "config.hpp"
 #include <stdio.h>
 #include <assert.h>
 #include <tr1/functional>
@@ -56,9 +57,9 @@ MenuBar::MenuBar(Window * parent, MenuData * d)
 void MenuBar::redraw()
 {
 	cairo_t * cr = win->cr;
-	cairo_set_source_rgb(cr, 0.75, 1.0, 0.75);
+	rtk_config_set_color(cr, "appearance\nbackground");
 	cairo_paint(cr);
-	cairo_set_source_rgb(cr, 0, 0, 0);
+	rtk_config_set_color(cr, "appearance\ntext-color");
 	map<int, MenuEntry*>::iterator iter;
 	int y = baseline, x = MENU_PRE_SPACE;
 	for(iter = menumap.begin(); iter != menumap.end(); iter++) {
@@ -73,11 +74,11 @@ void MenuBar::redraw()
 void MenuBar::highlight(int hl_start, int hl_end, const char * label)
 {	
 	cairo_t * cr = win->cr;
-	cairo_set_source_rgb(cr, 0.3, 0.3, 0.6); // TODO: color from config
+	rtk_config_set_color(cr, "appearance\nmenu-highlight");
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 	cairo_rectangle(cr, hl_start, 0, hl_end - hl_start, height);
 	cairo_fill(cr);
-	cairo_set_source_rgb(cr, 1.0, 1.0, 1.0); // TODO: color from config
+	rtk_config_set_color(cr, "appearance\nhighlight-text");
 	cairo_move_to(cr, hl_start + MENU_PRE_SPACE, baseline);
 	cairo_show_text(cr, label);
 	rtk_flush_surface(cr);
@@ -251,18 +252,18 @@ void PopupMenu::renderbackpix()
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 	cairo_surface_mark_dirty(cairo_get_target(cr));
 	cairo_reset_clip(cr);
-	cairo_set_source_rgb(cr, 0.75, 1.0, 0.75);
+	rtk_config_set_color(cr, "appearance\nbackground");
 	cairo_paint(cr);
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-	cairo_set_source_rgb(cr, 0, 0, 0);
+	rtk_config_set_color(cr, "appearance\ntext-color");
 	map<int, MenuEntry*>::iterator iter;
 	int cur_x = MENU_PRE_SPACE;
 	int y = 0;
 	for(iter = menumap.begin(); iter != menumap.end(); iter++) {
-		cairo_set_source_rgb(cr, 0,0,0);
+		//cairo_set_source_rgb(cr, 0,0,0);
 		if((*iter).second == NULL) break;
 		MenuEntry * entry = (*iter).second;
-		cairo_set_source_rgba(cr, 0, 0, 0, 1);
+		rtk_config_set_color(cr, "appearance\ntext-color");
 		cairo_move_to(cr, cur_x, y + baseline);
 		cairo_show_text(cr, entry->label);
 		y += itemheight;
@@ -292,11 +293,11 @@ void PopupMenu::redraw()
 			}
 		}
 		if(!e) return;
-		cairo_set_source_rgb(cr, 0.3, 0.3, 0.6); // TODO: color from config
+		rtk_config_set_color(cr, "appearance\nmenu-highlight");
 		cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 		cairo_rectangle(cr, 0, hl_start, width, itemheight);
 		cairo_fill(cr);
-		cairo_set_source_rgb(cr, 1, 1, 1);
+		rtk_config_set_color(cr, "appearance\nhighlight-text");
 		cairo_move_to(cr, MENU_PRE_SPACE, hl_start + baseline);
 		cairo_show_text(cr, e->label);
 	}

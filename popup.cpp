@@ -1,5 +1,6 @@
-#include "popup.hpp"
 #include <tr1/functional>
+#include "popup.hpp"
+#include "config.hpp"
 
 using namespace std;
 using namespace tr1;
@@ -82,13 +83,13 @@ Popup::Popup(const char * text, const char * title, ToplevelWindow * w) : label(
 void Popup::redraw()
 {
 	cairo_t * cr = win->cr;
-	cairo_set_source_rgb(cr, 0.6, 0.6, 0.6); // TODO: color from config
+	rtk_config_set_color(cr, "appearance\nbackground");
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 	cairo_paint(cr);
 
 	// draw the label.
 	// TODO: we need a textarea class for multiline layout
-	cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+	rtk_config_set_color(cr, "appearance\ntext-color");
 	cairo_move_to(cr, 0, 5);
 	draw_text(label, cr);
 }
