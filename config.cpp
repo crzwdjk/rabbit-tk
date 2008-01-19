@@ -74,7 +74,7 @@ void rtk_config_init()
    and uses the keys to look up Yvals in successive YMAPs, returning the last
    value.
 */
-Yval rtk_config_query(const char * path)
+extern "C" Yval rtk_config_query(const char * path)
 {
 	Yval cur = rtk_global_config;
 	vector<string>::iterator iter;
@@ -100,7 +100,7 @@ Yval rtk_config_query(const char * path)
    Uses the path to look up a Yval in the config, then parses it into a color
    and sets it as the rgb solid source for cr.
 */
-void rtk_config_set_color(cairo_t * cr, const char * path)
+extern "C" void rtk_config_set_color(cairo_t * cr, const char * path)
 {
 	Yval val = rtk_config_query(path);
 	// parse color:
