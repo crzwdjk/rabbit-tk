@@ -1,17 +1,9 @@
-/* config.cpp 
-   
-   on global init, config file is loaded. This happens through a series of
-   successive merges: first the default config, then the global config,
-   then the user's config. Maybe application-specific ones are possible too,
-   but those would be partial merges.
-   rtk_config_load(): load file to YAML
-   rtk_config_merge(): merge two configuration trees
-   rtk_config_write_default(): write out the default configuration file
-     ~/.rtk-config from shared memory
- */
+/* config.cpp - functions related to the configuration system.
+*/
 #include <fcntl.h>
-
+#include <cairo/cairo.h>
 #include "yaml/yaml.hpp"
+#include "config.hpp"
 
 using namespace std;
 using namespace __gnu_cxx;
@@ -20,14 +12,14 @@ using namespace __gnu_cxx;
 Yval rtk_global_config;
 extern "C" char rtk_config_yaml[];
 
-/* So what the hell is a merge? You have two Yvals, source and dest. You
+/* merge - merge two config trees
+   So what is a merge? You have two Yvals, source and dest. You
    want to fill in the missing parts of dest from src. So... if they're of
    different types, dest wins. If they're scalar, dst wins. 
    But if dst is a map, go through all the keys in src. If a given key is
    not in dst, it and its value are added to dst. If it is in dst, then the
    values are merged recursively.
 */
-
 static void merge(Yval & dst, Yval & src)
 {
 	if(dst.type != src.type) return;
@@ -63,6 +55,10 @@ static void write_file(char * data, const char * file)
 	close(fd);
 }
 
+/* rtk_config_init - global initialization function for the config system.
+   Loads the default set of configuration data: built-in, systemwide, and 
+   finally user's own. If the user's config file doesn't exist, it's created.
+*/
 void rtk_config_init()
 {
 	rtk_global_config = parse(rtk_config_yaml);
@@ -71,4 +67,56 @@ void rtk_config_init()
 	rtk_config_merge_file(rtk_global_config, "/etc/rtk/config");
 	if(!rtk_config_merge_file(rtk_global_config, homepath.c_str()))
 		write_file(rtk_config_yaml, homepath.c_str());
+}
+
+/* rtk_config_query - Query the rtk_global_config configuration tree
+   path is a string of keys separated by newlines. It uses rtk_global_config,
+   and uses the keys to look up Yvals in successive YMAPs, returning the last
+   value.
+*/
+Yval rtk_config_query(const char * path)
+{
+	Yval cur = rtk_global_config;
+	vector<string>::iterator iter;
+	size_t p = 0, old_p = 0;
+	Yval key;
+	key.type = YSTR;
+	key.v.s = new string;
+	while(path[p]) {
+		if(cur.type != YMAP) throw("not a map");
+		while(path[p] && path[p] != '\n') p++;
+		*key.v.s = string(path, old_p, p - old_p);
+		if(cur.v.m->find(key) == cur.v.m->end())
+			throw string("key not found: ") + *key.v.s;
+		cur = (*cur.v.m)[key];
+		if(!path[p]) break;
+		p += 1;
+		old_p = p;
+	}
+	return cur;
+}
+
+/* rtk_config_set_color - look up color in config and it in the cairo context
+   Uses the path to look up a Yval in the config, then parses it into a color
+   and sets it as the rgb solid source for cr.
+*/
+void rtk_config_set_color(cairo_t * cr, const char * path)
+{
+	Yval val = rtk_config_query(path);
+	// parse color:
+	double rf, gf, bf;
+	if(val.type == YSTR) {
+		const char * color_str = val.v.s->c_str();
+		if(color_str[0] == '#') {
+			unsigned int r, g, b;
+			if(sscanf(color_str + 1, "%2x%2x%2x", &r, &g, &b) != 3) {
+				fprintf(stderr, "COLOR parse error: %s\n", color_str);
+			}
+			rf = r / 255.0;
+			gf = g / 255.0;
+			bf = b / 255.0;
+		}
+	}
+
+	cairo_set_source_rgb(cr, rf, gf, bf);
 }
