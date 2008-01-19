@@ -2,6 +2,7 @@
 #include "window.hpp"
 #include "atomcache.hpp"
 #include "keymap.hpp"
+#include "config.hpp"
 #include <xcb/xcb_aux.h>
 
 xcb_connection_t * rtk_xcb_connection;
@@ -19,13 +20,22 @@ extern void rtk_config_init();
 cairo_scaled_font_t * menu_font;
 cairo_font_extents_t menu_font_extents;
 
-const int MENU_FONT_SIZE = 10;
-
 static void menu_font_init(cairo_t * cr)
 {
-	// TODO: menu font from prefs
-	cairo_select_font_face(cr, "sans", CAIRO_FONT_SLANT_NORMAL,
+	Yval font_size = rtk_config_query("appearance\nmain-font\nsize");
+	Yval font_face = rtk_config_query("appearance\nmain-font\nface");
+
+	if(font_face.type != YSTR)
+		throw "font face is not a string";
+
+	cairo_select_font_face(cr, font_face.v.s->c_str(), CAIRO_FONT_SLANT_NORMAL,
 			       CAIRO_FONT_WEIGHT_NORMAL);
+
+	if(font_size.type == YINT)
+		cairo_set_font_size(cr, font_size.v.i);
+	else if(font_size.type == YFLT)
+		cairo_set_font_size(cr, font_size.v.f);
+	else throw "font size in config is not a valid number";
 
 	menu_font = cairo_get_scaled_font(cr);	     
 	cairo_scaled_font_extents(menu_font, &menu_font_extents);
