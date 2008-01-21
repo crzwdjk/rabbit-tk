@@ -20,10 +20,10 @@ extern "C" char rtk_config_yaml[];
    not in dst, it and its value are added to dst. If it is in dst, then the
    values are merged recursively.
 */
-static void merge(Yval & dst, Yval & src)
+static Yval merge(Yval & dst, Yval & src)
 {
-	if(dst.type != src.type) return;
-	if(dst.type != YMAP) return;
+	if(dst.type != src.type) return dst;
+	if(dst.type != YMAP) return dst;
 	hash_map<Yval, Yval>::iterator iter;
 	hash_map<Yval, Yval> & sm = *src.v.m, &dm = *dst.v.m;
 	for(iter = sm.begin(); iter != sm.end(); iter++) {
@@ -34,6 +34,7 @@ static void merge(Yval & dst, Yval & src)
 		else
 			merge(dm[key], sval);
 	}
+	return dst;
 }
 
 static bool rtk_config_merge_file(Yval & config, const char * filename)
@@ -41,7 +42,7 @@ static bool rtk_config_merge_file(Yval & config, const char * filename)
 	int fd = open(filename, O_RDONLY);
 	if(fd == -1) return false;
 	Yval file = parse(fd);
-	merge(file, config);
+	config = merge(file, config);
 	return true;
 }
 
