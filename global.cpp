@@ -51,11 +51,19 @@ static void keybindings_init()
 	rtk_global_keybindings = new Keymap();
 }
 
+/* rtk_global_init - Global initialization function for RTK.
+   This function initializes all the global data that needs initializing,
+   starting from the X connection. The program must call this function
+   before any other RTK function. TODO: what if initialization fails?
+*/
 extern "C" void rtk_global_init(int argc, char ** argv)
 {
 	rtk_config_init();
 	xcb_connection_init();
 	keybindings_init();
-	Window tmp(0, 0);
-	menu_font_init(tmp.cr);
+	cairo_surface_t * surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, 0, 0);
+	cairo_t * cr = cairo_create(surface);
+	menu_font_init(cr);
+	cairo_destroy(cr);
+	cairo_surface_destroy(surface);
 }
