@@ -34,7 +34,12 @@ void rtk_main_event_loop()
 			continue;
 		}
 		// TODO: dispatch to other thread if needed
-		rtk_process_one_event(e);
+		try {
+			rtk_process_one_event(e);
+		} catch(string s) {
+			fprintf(stderr, "fatal error: %s\n", s.c_str());
+			exit(3);
+		}
 	}
 	fprintf(stderr, "RTK: exited from event loop");
 }
