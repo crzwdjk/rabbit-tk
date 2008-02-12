@@ -11,7 +11,7 @@ all: main
 main: $(OBJFILES)
 	$(LD) $(LDFLAGS) $(OBJFILES) -o $@
 
-src/rabbit-tk.o:
+src/rabbit-tk.o: .PHONY
 	make -C src
 
 # rule to compile a YAML file into a .o
@@ -21,3 +21,5 @@ src/rabbit-tk.o:
 clean:
 	rm -f $(OBJFILES) main
 	make -C src clean
+
+.PHONY:
