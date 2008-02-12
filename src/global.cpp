@@ -11,6 +11,10 @@ xcb_screen_t * rtk_xcb_screen;
 static void xcb_connection_init()
 {
 	rtk_xcb_connection = xcb_connect(NULL, NULL);
+	if(rtk_xcb_connection == NULL) {
+		fprintf(stderr, "Couldn't open X connection\n");
+		exit(1);
+	}
 	rtk_xcb_screen = xcb_aux_get_screen(rtk_xcb_connection, 0);
 	atoms.bind(rtk_xcb_connection);
 }
