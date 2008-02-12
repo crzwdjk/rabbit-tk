@@ -10,6 +10,9 @@
 extern cairo_scaled_font_t * menu_font;
 extern cairo_font_extents_t menu_font_extents;
 
+extern cairo_scaled_font_t * icon_font;
+extern cairo_font_extents_t icon_font_extents;
+
 extern xcb_connection_t * rtk_xcb_connection;
 extern xcb_screen_t * rtk_xcb_screen;
 

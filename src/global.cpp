@@ -4,6 +4,9 @@
 #include "keymap.hpp"
 #include "config.hpp"
 #include <xcb/xcb_aux.h>
+#include <string>
+
+using namespace std;
 
 xcb_connection_t * rtk_xcb_connection;
 xcb_screen_t * rtk_xcb_screen;
@@ -23,14 +26,17 @@ extern void rtk_config_init();
 
 cairo_scaled_font_t * menu_font;
 cairo_font_extents_t menu_font_extents;
+cairo_scaled_font_t * icon_font;
+cairo_font_extents_t icon_font_extents;
 
-static void menu_font_init(cairo_t * cr)
+static void init_font(cairo_t * cr, string configname, cairo_scaled_font_t *& font,
+		      cairo_font_extents_t & extents)
 {
-	Yval font_size = rtk_config_query("appearance\nmain-font\nsize");
-	Yval font_face = rtk_config_query("appearance\nmain-font\nface");
+	Yval font_size = rtk_config_query(configname + "\nsize");
+	Yval font_face = rtk_config_query(configname + "\nface");
 
 	if(font_face.type != YSTR)
-		throw "font face is not a string";
+		throw "font face" + configname + "is not a string";
 
 	cairo_select_font_face(cr, font_face.v.s->c_str(), CAIRO_FONT_SLANT_NORMAL,
 			       CAIRO_FONT_WEIGHT_NORMAL);
@@ -41,8 +47,18 @@ static void menu_font_init(cairo_t * cr)
 		cairo_set_font_size(cr, font_size.v.f);
 	else throw "font size in config is not a valid number";
 
-	menu_font = cairo_get_scaled_font(cr);	     
-	cairo_scaled_font_extents(menu_font, &menu_font_extents);
+	font = cairo_get_scaled_font(cr);
+	cairo_scaled_font_extents(menu_font, &extents);
+}
+
+static void fonts_init()
+{
+	cairo_surface_t * surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, 0, 0);
+	cairo_t * cr = cairo_create(surface);
+	init_font(cr, "appearance\nmenu-font", menu_font, menu_font_extents);
+	init_font(cr, "appearance\nicon-font", icon_font, icon_font_extents);
+	cairo_destroy(cr);
+	cairo_surface_destroy(surface);
 }
 
 xcb_key_symbols_t * rtk_keytable;
@@ -65,9 +81,5 @@ extern "C" void rtk_global_init(int argc, char ** argv)
 	rtk_config_init();
 	xcb_connection_init();
 	keybindings_init();
-	cairo_surface_t * surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, 0, 0);
-	cairo_t * cr = cairo_create(surface);
-	menu_font_init(cr);
-	cairo_destroy(cr);
-	cairo_surface_destroy(surface);
+	fonts_init();
 }
