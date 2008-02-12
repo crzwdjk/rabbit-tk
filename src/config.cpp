@@ -75,7 +75,7 @@ void rtk_config_init()
    and uses the keys to look up Yvals in successive YMAPs, returning the last
    value.
 */
-extern "C" Yval rtk_config_query(const char * path)
+extern "C" Yval rtk_config_query(const string path)
 {
 	Yval cur = rtk_global_config;
 	vector<string>::iterator iter;
