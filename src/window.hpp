@@ -123,4 +123,11 @@ public:
   virtual ~PopupWindow() { }
 };
 
+class ScrollPane : public Window {
+  int scroll_x, scroll_y;
+public:
+  ScrollPane(int w, int h, int x, int y, Window * parent)
+    : Window(w, h, x, y, parent), scroll_x(0), scroll_y(0) {}
+  void scroll(int dx, int dy);
+};
 #endif

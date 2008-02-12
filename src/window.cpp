@@ -173,3 +173,17 @@ PopupWindow::PopupWindow(int w, int h, const char* name, ToplevelWindow * toplev
 	xcb_atom_t wm_protocols[] = { atoms["WM_DELETE_WINDOW"] };
 	xcb_set_wm_protocols(c, win_id, 1, wm_protocols);
 }
+
+/* ScrollPane::scroll(dx, dy)
+   scroll the pane. Positive dx and dy move the pane respectively down and right
+   along the scroll surface
+ */
+void ScrollPane::scroll(int dx, int dy)
+{
+	xcb_params_configure_window_t config_params;
+	config_params.x = scroll_x - dx;
+	config_params.y = scroll_y - dy;
+	xcb_aux_configure_window(rtk_xcb_connection, win_id,
+				 XCB_CONFIG_WINDOW_X|XCB_CONFIG_WINDOW_Y,
+				 &config_params);
+}
