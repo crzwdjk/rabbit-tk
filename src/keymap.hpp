@@ -15,6 +15,7 @@ enum rtk_kb_mods_t {
 
 const uint32_t RTK_PRIVATE_KEYSYM_FLAG = 0x80000000;
 const uint32_t RTK_KEY_ALL_PRINTABLE = 0x80000001;
+const uint32_t RTK_KEY_NONE = 0x00000000;
 const uint32_t RTK_KB_RAW_MASK = 0xffffff00;
 
 const uint32_t RTK_KEY_ESC = 0xff1b;
@@ -30,6 +31,8 @@ struct rtk_key_t {
   uint8_t modifiers;
   bool operator==(const rtk_key_t & o) const { return (sym == o.sym) && (modifiers == o.modifiers); }
 };
+
+const rtk_key_t RTK_NO_KEY = { RTK_KEY_NONE, 0 };
 
 namespace __gnu_cxx {
 template<>
@@ -49,8 +52,9 @@ class Keymap {
   keybinding_t lookup_key(xcb_keycode_t code, uint8_t mods);
 public:
   Keymap() {}
-  void process_keypress(xcb_key_press_event_t *);
+  bool process_keypress(xcb_key_press_event_t *);
   void add_key_handler(key_action_t, uint32_t key, uint8_t mods = 0);
+  void add_key_handler(key_action_t a, rtk_key_t k) { add_key_handler(a, k.sym, k.modifiers); }
 };
 
 #endif

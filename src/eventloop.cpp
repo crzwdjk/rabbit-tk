@@ -1,6 +1,7 @@
 #include <map>
 #include "window.hpp"
 #include "atomcache.hpp"
+#include "global.hpp"
 
 using namespace std;
 
@@ -33,7 +34,12 @@ void rtk_main_event_loop()
 			continue;
 		}
 		// TODO: dispatch to other thread if needed
-		rtk_process_one_event(e);
+		try {
+			rtk_process_one_event(e);
+		} catch(string s) {
+			fprintf(stderr, "fatal error: %s\n", s.c_str());
+			exit(3);
+		}
 	}
 	fprintf(stderr, "RTK: exited from event loop");
 }
@@ -94,9 +100,8 @@ void rtk_process_one_event(xcb_generic_event_t * e)
 	case XCB_KEY_PRESS:
 	{
 		xcb_key_press_event_t * key = (xcb_key_press_event_t *)e;
-		fprintf(stderr, "key pressed\n");
-		// TODO: check against global map
-		// if that didn't work, dispatch to window
+		if(rtk_global_keybindings->process_keypress(key))
+			return;
 		if(windows.find(key->event) == windows.end()) return;
 		windows[key->event]->keypress(key);
 		break;

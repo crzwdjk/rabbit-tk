@@ -1,0 +1,22 @@
+--- !rabbit-tk/config
+# This file controls various aspects of RTK programs. It is in a file format
+# called YAML. For all the gory details, see http://yaml.org, but the format
+# is fairly self-explanatory.
+# 
+# The appearance section allows you to change the fonts and colors used
+# by RTK programs. Thus far, colors can only be specified in HTML-style
+# hex format, #rrggbb, and these must be quoted so that YAML doesn't think
+# that the # starts a comment. In the future, you'll be able to use plain
+# old color names too (TODO: color names)
+appearance:
+    background: "#aaaaaa"
+    text-color: "#000000"
+    button-color: "#ffffff"
+    menu-highlight: "#5555aa"
+    highlight-text: "#ffffff"
+    menu-font:
+        face: sans
+        size: 10
+    icon-font:
+        face: sans
+        size: 10

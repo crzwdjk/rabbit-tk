@@ -58,7 +58,10 @@ const char * about_text = \
 void about(ToplevelWindow * w)
 {
 	fprintf(stderr, "About\n");
-	new Popup(about_text, "About Box", w);
+	char * about_buf = new char[strlen(about_text) + strlen(rtk_version_string) + 50];
+	sprintf(about_buf, "%s\nRTK version: %s", about_text, rtk_version_string);
+	new Popup(about_buf, "About Box", w);
+	free(about_buf);
 }
 
 void exit_program()
@@ -69,11 +72,11 @@ MenuData * make_menu(ToplevelWindow * w)
 {
 	vector<MenuEntry> * menu = new vector<MenuEntry>;
 	vector<MenuEntry> * helpMenu = new vector<MenuEntry>;
-	MenuEntry ab = {"About", NULL, bind(&about, w)};
+	MenuEntry ab = {"About", NULL, RTK_NO_KEY, bind(&about, w)};
 	helpMenu->push_back(ab);
 	MenuData * fileMenu = new MenuData;
-	MenuEntry ratherlong = {"Something rather long to test spacing", NULL, NULL};
-	MenuEntry ex = {"Exit", NULL, &exit_program};
+	MenuEntry ratherlong = {"Something rather long to test spacing", NULL, RTK_NO_KEY, NULL};
+	MenuEntry ex = {"Exit", NULL, {'x', RTK_KB_CTRL }, &exit_program};
 	fileMenu->push_back(ratherlong);
 	fileMenu->push_back(ex);
 

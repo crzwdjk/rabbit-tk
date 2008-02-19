@@ -68,11 +68,12 @@ Window::~Window()
 }
 
 
-ToplevelWindow::ToplevelWindow(int w, int h, char* name)
+ToplevelWindow::ToplevelWindow(int w, int h, const char* name)
 	: Window(w, h)
 {
 	xcb_connection_t * c = rtk_xcb_connection;
-	
+
+	add_event_to_mask(win_id, XCB_EVENT_MASK_KEY_PRESS);
 	xcb_change_property (c, XCB_PROP_MODE_REPLACE, win_id,
 			     WM_NAME, STRING, 8,
 			     strlen (name), name);
@@ -97,11 +98,12 @@ ToplevelWindow::ToplevelWindow(int w, int h, char* name)
 
 
 MenuWindow::MenuWindow(int w, int h, int x, int y, Window * p)
-	: width(w), height(h)
 {
 	xcb_connection_t * c = rtk_xcb_connection;
 	xcb_screen_t * screen = rtk_xcb_screen;
 
+	width = w;
+	height = h;
 	uint32_t mask = 0;
 	uint32_t values[2];
 
@@ -172,18 +174,16 @@ PopupWindow::PopupWindow(int w, int h, const char* name, ToplevelWindow * toplev
 	xcb_set_wm_protocols(c, win_id, 1, wm_protocols);
 }
 
-ButtonWindow::ButtonWindow(int w, int h, int x, int y, Window * p)
-	: Window(w, h, x, y, p)
+/* ScrollPane::scroll(dx, dy)
+   scroll the pane. Positive dx and dy move the pane respectively down and right
+   along the scroll surface
+ */
+void ScrollPane::scroll(int dx, int dy)
 {
-	// set passive grab.
-	xcb_grab_button(rtk_xcb_connection, 0, this->win_id,
-			XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION,
-			XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC, XCB_NONE, XCB_NONE, 1, 0);
-}
-
-void ButtonWindow::unclick(int b, int m, int x, int y)
-{
-	// release active grab
-	xcb_ungrab_pointer(rtk_xcb_connection, XCB_CURRENT_TIME);
-	Window::unclick(b, m, x, y);
+	xcb_params_configure_window_t config_params;
+	config_params.x = scroll_x - dx;
+	config_params.y = scroll_y - dy;
+	xcb_aux_configure_window(rtk_xcb_connection, win_id,
+				 XCB_CONFIG_WINDOW_X|XCB_CONFIG_WINDOW_Y,
+				 &config_params);
 }

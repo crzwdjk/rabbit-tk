@@ -1,11 +1,12 @@
-#include "popup.hpp"
 #include <tr1/functional>
+#include "popup.hpp"
+#include "config.hpp"
 
 using namespace std;
 using namespace tr1;
 using namespace tr1::placeholders;
 
-vector<string> splitlines(const char * text)
+static vector<string> splitlines(const char * text)
 {
 	vector<string> s;
 	const char * p = text;
@@ -29,7 +30,7 @@ const int TOP_SPACE = 2;
 const int PRE_SPACE = 5;
 const int BUTT_PAD = 6;
 
-pair<int, int> measure_text(vector<string> lines)
+static pair<int, int> measure_text(vector<string> lines)
 {
 	int x = 0, y = 0;
 	vector<string>::iterator iter;
@@ -45,7 +46,7 @@ pair<int, int> measure_text(vector<string> lines)
 }
 
 // assume cr's cursor is at topleft of drawing rectangle
-void draw_text(vector<string> lines, cairo_t * cr)
+static void draw_text(vector<string> lines, cairo_t * cr)
 {
 	int itemheight = int(menu_font_extents.height) + BOTTOM_SPACE + TOP_SPACE;
 	int baseline = itemheight - int(menu_font_extents.descent) - BOTTOM_SPACE;
@@ -82,13 +83,13 @@ Popup::Popup(const char * text, const char * title, ToplevelWindow * w) : label(
 void Popup::redraw()
 {
 	cairo_t * cr = win->cr;
-	cairo_set_source_rgb(cr, 0.6, 0.6, 0.6); // TODO: color from config
+	rtk_config_set_color(cr, "appearance\nbackground");
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 	cairo_paint(cr);
 
 	// draw the label.
 	// TODO: we need a textarea class for multiline layout
-	cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+	rtk_config_set_color(cr, "appearance\ntext-color");
 	cairo_move_to(cr, 0, 5);
 	draw_text(label, cr);
 }
