@@ -9,7 +9,7 @@ OBJFILES=main.o src/rabbit-tk.o
 all: main
 
 main: $(OBJFILES)
-	$(LD) $(LDFLAGS) $(OBJFILES) -o $@
+	$(LD) $(LDFLAGS) $(OBJFILES) -lsyck -o $@
 
 src/rabbit-tk.o: .PHONY
 	make -C src
