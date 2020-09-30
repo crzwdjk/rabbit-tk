@@ -1,9 +1,4 @@
-#include <xcb/xcb.h>
-#include <cairo/cairo.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+#include <bits/stdc++.h>
 #include <tr1/functional>
 
 #include "window.hpp"
